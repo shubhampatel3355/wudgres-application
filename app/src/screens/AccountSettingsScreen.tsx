@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
     marginBottom: 8,
   },
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
   },
   saveButton: {
@@ -276,12 +276,12 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: theme.colors.textPrimary,
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
   },
   infoText: {
     marginTop: 24,
     fontSize: theme.fontSize.xs,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,

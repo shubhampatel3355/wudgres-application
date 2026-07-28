@@ -3,14 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import NetworkOverlay from './src/components/NetworkOverlay';
 import { WishlistProvider } from './src/context/WishlistContext';
-import { 
-  useFonts, 
-  Unbounded_300Light,
-  Unbounded_400Regular, 
-  Unbounded_500Medium,
-  Unbounded_600SemiBold,
-  Unbounded_700Bold 
-} from '@expo-google-fonts/unbounded';
+import { useFonts } from 'expo-font';
 import { View, Text, LogBox } from 'react-native';
 
 LogBox.ignoreLogs([
@@ -22,15 +15,12 @@ import { registerForPushNotificationsAsync } from './src/lib/notifications';
 
 export default function App() {
   let [fontsLoaded] = useFonts({
-    Unbounded_300Light,
-    Unbounded_400Regular,
-    Unbounded_500Medium,
-    Unbounded_600SemiBold,
-    Unbounded_700Bold,
+    'Gilroy-Regular': require('./assets/fonts/Gilroy-Regular.ttf'),
+    'Gilroy-Bold': require('./assets/fonts/Gilroy-Bold.ttf'),
   });
 
   useEffect(() => {
-    let pushToken: string | null = null;
+    let pushToken: string | null | undefined = null;
     
     async function setupNotifications() {
       try {

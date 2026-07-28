@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "description": "WudGres — Premium Door Collections. Browse, customize and price WudGres doors.",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -47,8 +47,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "YOUR_EAS_PROJECT_ID"
+        "projectId": "d0841faf-2360-4dd2-883e-829dc416bcb1"
       }
-    }
+    },
+    "owner": "wudgres"
   }
 }

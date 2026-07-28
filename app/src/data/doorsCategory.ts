@@ -10,15 +10,15 @@ export interface DoorCategory {
 
 // Use existing series images for door categories
 const doorCategoryImages = {
-    timborAcacia: require('../assets/images/door/door-image/Timbor.png'),
+    timborAcacia: require('../assets/images/door/timbor/Timbor.png'),
     venDecor: require('../assets/images/door/door-image/Ven-Decor.png'),
-    teakVeneer: require('../assets/images/door/door-image/Teak Veneer.png'),
+    teakVeneer: require('../assets/images/door/teak/Teak Veneer.png'),
     lamorous: require('../assets/images/door/door-image/Lamorous.png'),
-    metalem: require('../assets/images/door/door-image/Matalem.png'),
-    espial: require('../assets/images/door/door-image/Espial.png'),
-    divine: require('../assets/images/door/door-image/Divine.png'),
-    embozz: require('../assets/images/door/door-image/Embozz.png'),
-    lamina: require('../assets/images/door/door-image/Lamina.png'),
+    metalem: require('../assets/images/door/metalem/Metalem.png'),
+    espial: require('../assets/images/door/espial/Espial.png'),
+    divine: require('../assets/images/door/divine/Divine.png'),
+    embozz: require('../assets/images/door/embozz/Embozz.png'),
+    lamina: require('../assets/images/door/lamina/Lamina.png'),
     solidWhite: require('../assets/images/door/door-image/Solid White.png'),
     flushDoors: require('../assets/images/door/door-image/Flush Doors.png'),
 };
@@ -26,7 +26,7 @@ const doorCategoryImages = {
 export const doorCategories: DoorCategory[] = [
     {
         id: 'timbor-acacia',
-        name: 'Timbor',
+        name: 'Legacy Wood',
         image: doorCategoryImages.timborAcacia,
         description: 'Premium solid Acacia wood doors with beautiful natural grains',
     },

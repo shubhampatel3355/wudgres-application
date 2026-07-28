@@ -30,7 +30,7 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ navigation }) => {
   React.useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
-      const { data } = await supabase.from("products").select("*");
+      const { data } = await supabase.from("products").select("*").order("name", { ascending: true });
       if (data) setProducts(data);
       setIsLoading(false);
     };
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: theme.fontSize.xxl,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.primary,
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.md,

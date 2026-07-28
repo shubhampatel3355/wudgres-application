@@ -68,8 +68,8 @@ const STATIC_CATEGORIES = [
   },
   {
     id: "static-timbor",
-    name: "Timbor",
-    image_url: require("../assets/images/door/timbor/Timbor Bg.png"),
+    name: "Legacy Wood",
+    image_url: require("../assets/images/door/timbor/Timbor.png"),
     route: "Timbor",
     isStatic: true,
     inHomeStack: true,
@@ -77,7 +77,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-lamina",
     name: "Lamina",
-    image_url: require("../assets/images/door/lamina/Lamina 2.jpeg"),
+    image_url: require("../assets/images/door/lamina/Lamina 2.png"),
     route: "Lamina",
     isStatic: true,
     inHomeStack: true,
@@ -93,7 +93,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-teak-veneer",
     name: "Teak Veneer",
-    image_url: require("../assets/images/door/teak/Teak Veneer Bg.png"),
+    image_url: require("../assets/images/door/teak/Teak Veneer.png"),
     route: "TeakVeneer",
     isStatic: true,
     inHomeStack: true,
@@ -101,7 +101,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-metalem",
     name: "Metalem",
-    image_url: require("../assets/images/door/metalem/Metalem Bg.png"),
+    image_url: require("../assets/images/door/metalem/Metalem.png"),
     route: "Metalem",
     isStatic: true,
     inHomeStack: true,
@@ -109,7 +109,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-espial",
     name: "Espial",
-    image_url: require("../assets/images/door/espial/Espial Bg.png"),
+    image_url: require("../assets/images/door/espial/Espial.png"),
     route: "Espial",
     isStatic: true,
     inHomeStack: true,
@@ -117,7 +117,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-divine",
     name: "Divine",
-    image_url: require("../assets/images/door/divine/Divine Bg.png"),
+    image_url: require("../assets/images/door/divine/Divine.png"),
     route: "Divine",
     isStatic: true,
     inHomeStack: true,
@@ -125,7 +125,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-embozz",
     name: "Embozz",
-    image_url: require("../assets/images/door/embozz/Embozz Bg.png"),
+    image_url: require("../assets/images/door/embozz/Embozz.png"),
     route: "Embozz",
     isStatic: true,
     inHomeStack: true,
@@ -240,9 +240,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   const handleProductPress = (item: any) => {
     if (item.isStatic) {
       if (item.inHomeStack) {
-        navigation.navigate("Main", { 
-          screen: "HomeStack", 
-          params: { screen: item.route } 
+        navigation.navigate("Main", {
+          screen: "HomeStack",
+          params: { screen: item.route }
         });
       } else {
         navigation.navigate(item.route);
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: "#FFFFFF",
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     fontSize: 14,
     height: "100%",
   },
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: "#999",
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     fontSize: 16,
     marginTop: 16,
     textAlign: "center",

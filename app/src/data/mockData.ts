@@ -18,13 +18,13 @@ const categoryImages = {
 const seriesImages = {
     venDecor: require('../assets/images/door/door-image/Ven-Decor.png'),
     lamorous: require('../assets/images/door/door-image/Lamorous.png'),
-    timbor: require('../assets/images/door/timbor/Timbor Bg.png'),
-    teakVeneer: require('../assets/images/door/teak/Teak Veneer Bg.png'),
-    metalem: require('../assets/images/door/metalem/Metalem Bg.png'),
-    espial: require('../assets/images/door/espial/Espial Bg.png'),
-    divine: require('../assets/images/door/divine/Divine Bg.png'),
-    embozz: require('../assets/images/door/embozz/Embozz Bg.png'),
-    lamina: require('../assets/images/door/lamina/Lamina 2.jpeg'),
+    timbor: require('../assets/images/door/timbor/Timbor.png'),
+    teakVeneer: require('../assets/images/door/teak/Teak Veneer.png'),
+    metalem: require('../assets/images/door/metalem/Metalem.png'),
+    espial: require('../assets/images/door/espial/Espial.png'),
+    divine: require('../assets/images/door/divine/Divine.png'),
+    embozz: require('../assets/images/door/embozz/Embozz.png'),
+    lamina: require('../assets/images/door/lamina/Lamina 2.png'),
     solidWhite: require('../assets/images/door/door-image/Solid White.png'),
     flushDoors: require('../assets/images/door/door-image/Flush Doors.png'),
 };
@@ -65,7 +65,7 @@ export const categories = [
 export const series = [
     {
         id: 'timbor',
-        name: 'Timbor',
+        name: 'Legacy Wood',
         image: seriesImages.timbor,
         categoryId: 'doors',
         productCount: 14,

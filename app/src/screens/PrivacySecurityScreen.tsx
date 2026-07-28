@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Bold',
     color: theme.colors.textDark,
     marginBottom: 16,
   },
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_500Medium',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
     marginBottom: 8,
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
   },
   saveButton: {
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: theme.colors.textPrimary,
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
   },
   divider: {
     height: 1,
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textMuted,
     lineHeight: 22,
     marginBottom: 16,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_500Medium',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.primary,
     marginRight: 6,
   },
@@ -392,6 +392,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#E53935',
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
   }
 });

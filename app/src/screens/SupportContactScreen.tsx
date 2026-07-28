@@ -122,20 +122,20 @@ export const SupportContactScreen: React.FC<SupportContactScreenProps> = ({ navi
 
   const faqs = [
     {
-      question: "How do I claim my warranty?",
-      answer: "You can claim your warranty by visiting the Warranty section in the Wudgres app or contacting our support team with your order ID and product serial number."
+      question: "What types of wood and finishes do you offer?",
+      answer: "WudGres specializes in premium Teak Wood, Flush Doors, and custom designer finishes. You can explore our complete collection and detailed specifications directly in the app catalogue."
     },
     {
-      question: "Do you offer installation services?",
-      answer: "Yes, we provide professional installation services for our doors and window shutters. You can request installation during checkout."
+      question: "How can I request a custom quote or bulk inquiry?",
+      answer: "Simply browse our product series and use the built-in inquiry options, or send us a message directly through this form with your dimensions and project requirements."
     },
     {
-      question: "How do I track my order?",
-      answer: "Once your order is dispatched, you will receive a tracking link via email and SMS. You can also view the status in the 'My Orders' section."
+      question: "Do you provide on-site consultation and measurements?",
+      answer: "No, we currently do not offer on-site consultations or physical measurement services. However, our support team can assist you remotely with standard sizing guidelines and technical recommendations."
     },
     {
-      question: "What is your return policy?",
-      answer: "We accept returns within 7 days of delivery for defective or damaged products. Please ensure the product is unused and in its original packaging."
+      question: "How do I claim product warranty or get after-sales support?",
+      answer: "Every WudGres door is manufactured to the highest quality standards. For warranty registration or technical assistance, simply reach out to our support desk with your invoice details."
     }
   ];
 
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Bold',
     color: theme.colors.textDark,
     marginBottom: 16,
   },
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_500Medium',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
     marginBottom: 8,
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
   },
   textArea: {
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
   },
   submitButton: {
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: theme.colors.textPrimary,
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
   },
   divider: {
     height: 1,
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   faqQuestion: {
     flex: 1,
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_500Medium',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
     paddingRight: 16,
   },
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   },
   faqAnswer: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textMuted,
     lineHeight: 20,
   },
@@ -410,13 +410,13 @@ const styles = StyleSheet.create({
   },
   contactInfoText: {
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textDark,
     marginBottom: 8,
   },
   contactInfoValue: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textMuted,
     marginBottom: 4,
   }

@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
   Animated,
+  Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -81,7 +82,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { productId } = route.params;
+  const { productId, seriesName } = route.params || {};
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -115,16 +116,166 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
       }),
     ]).start();
     fetchProduct();
-  }, [productId]);
+  }, [productId, seriesName]);
 
   const fetchProduct = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series(name)")
-      .eq("id", productId)
-      .single();
-    if (data) setProduct(data);
+    const isLegend =
+      (seriesName &&
+        (seriesName.toLowerCase().includes("legend") ||
+          seriesName.toLowerCase().includes("eco"))) ||
+      (productId &&
+        (productId.includes("265a86c2") ||
+          productId.includes("legend") ||
+          productId.includes("eco")));
+    const isRich =
+      (seriesName && seriesName.toLowerCase().includes("rich")) ||
+      (productId &&
+        (productId.includes("92c1cd07") || productId.includes("rich")));
+
+    let data: any[] | null = null;
+
+    if (isLegend) {
+      try {
+        let res = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .or("name.ilike.%legend%,name.ilike.%eco%,slug.ilike.%legend%,slug.ilike.%eco%")
+          .limit(1);
+        if (!res.data || res.data.length === 0) {
+          res = await supabase
+            .from("products")
+            .select("*, series(name)")
+            .ilike("series.name", "%legend%")
+            .limit(1);
+        }
+        if (!res.data || res.data.length === 0) {
+          res = await supabase
+            .from("products")
+            .select("*, series(name)")
+            .ilike("series.name", "%eco%")
+            .limit(1);
+        }
+        if (!res.data || res.data.length === 0) {
+          const resId = await supabase
+            .from("products")
+            .select("*, series(name)")
+            .eq("id", productId)
+            .maybeSingle();
+          if (resId.data) res.data = [resId.data];
+        }
+        data = res.data;
+      } catch (err) {
+        console.log("Error fetching NFC Legend product:", err);
+      }
+
+      if (data && data.length > 0) {
+        setProduct(data[0]);
+      } else {
+        setProduct({
+          id: "nfc-legend-static",
+          slug: "NFC Legend",
+          name: "NFC Legend",
+          category: "NFC Doors",
+          width: "36, 38, 40, 42",
+          height: "84, 96",
+          thickness: "32, 35",
+          dimensions:
+            "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
+          rate:
+            "12000.00, 12500.00, 13000.00, 13500.00, 14000.00, 14500.00, 15000.00, 15500.00",
+          image_url: null,
+          series: { name: "NFC Legend" },
+        });
+      }
+    } else if (isRich) {
+      try {
+        let res = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .or("name.ilike.%rich%,slug.ilike.%rich%")
+          .limit(1);
+        if (!res.data || res.data.length === 0) {
+          res = await supabase
+            .from("products")
+            .select("*, series(name)")
+            .ilike("series.name", "%rich%")
+            .limit(1);
+        }
+        if (!res.data || res.data.length === 0) {
+          const resId = await supabase
+            .from("products")
+            .select("*, series(name)")
+            .eq("id", productId)
+            .maybeSingle();
+          if (resId.data) res.data = [resId.data];
+        }
+        data = res.data;
+      } catch (err) {
+        console.log("Error fetching NFC Rich product:", err);
+      }
+
+      if (data && data.length > 0) {
+        setProduct(data[0]);
+      } else {
+        setProduct({
+          id: "nfc-rich-static",
+          slug: "NFC DOORS - Rich",
+          name: "NFC DOORS - Rich",
+          category: "NFC Doors",
+          width: "36, 38, 40, 42",
+          height: "84, 96",
+          thickness: "32, 35",
+          dimensions:
+            "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
+          rate:
+            "14000.00, 14500.00, 15000.00, 15500.00, 16000.00, 16500.00, 17000.00, 17500.00",
+          image_url: null,
+          series: { name: "NFC DOORS - Rich" },
+        });
+      }
+    } else {
+      let fetched = false;
+      if (seriesName) {
+        const { data: sData } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .ilike("series.name", `%${seriesName}%`)
+          .limit(1);
+        if (sData && sData.length > 0) {
+          setProduct(sData[0]);
+          fetched = true;
+        }
+      }
+      if (!fetched && productId) {
+        const { data: pData } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .eq("id", productId)
+          .maybeSingle();
+        if (pData) {
+          setProduct(pData);
+          fetched = true;
+        }
+      }
+      if (!fetched) {
+        setProduct({
+          id: "nfc-legend-static",
+          slug: "NFC Legend",
+          name: "NFC Legend",
+          category: "NFC Doors",
+          width: "36, 38, 40, 42",
+          height: "84, 96",
+          thickness: "32, 35",
+          dimensions:
+            "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
+          rate:
+            "12000.00, 12500.00, 13000.00, 13500.00, 14000.00, 14500.00, 15000.00, 15500.00",
+          image_url: null,
+          series: { name: "NFC Legend" },
+        });
+      }
+    }
     setLoading(false);
   };
 
@@ -213,7 +364,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
             fontSize: 10,
             color: "#666666",
             marginBottom: 6,
-            fontFamily: "Unbounded_400Regular",
+            fontFamily: "Gilroy-Regular",
           }}
         >
           {label}
@@ -235,7 +386,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
           <Text
             style={{
               fontSize: 14,
-              fontFamily: "Unbounded_600SemiBold",
+              fontFamily: "Gilroy-Regular",
               color: "#000",
             }}
           >
@@ -248,131 +399,144 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   };
 
   if (loading || !product) {
-    const glassColor = "rgba(255,255,255,0.15)";
+    const skeletonColor = "#E2E8F0";
+    const skeletonColorLight = "#F1F5F9";
     return (
-      <ImageBackground
-        source={backgroundImages.woodTexture}
-        style={styles.container}
-      >
-        <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={styles.container}>
+        {/* Header with Wood Texture Background */}
+        <ImageBackground
+          source={backgroundImages.woodTexture}
+          style={styles.headerBackground}
+          resizeMode="cover"
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons name="arrow-back" size={28} color="#FFFFFF" />
+              </TouchableOpacity>
 
-        {/* Header Skeleton */}
-        <SafeAreaView edges={["top"]}>
-          <View
-            style={{
-              height: 60,
-              paddingHorizontal: 16,
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <SkeletonItem
-              width={40}
-              height={40}
-              borderRadius={20}
-              color={glassColor}
-            />
-            <View style={{ flexDirection: "row" }}>
-              <SkeletonItem
-                width={30}
-                height={30}
-                borderRadius={15}
-                style={{ marginRight: 20 }}
-                color={glassColor}
-              />
-              <SkeletonItem
-                width={30}
-                height={30}
-                borderRadius={15}
-                color={glassColor}
-              />
+              <View style={styles.headerIcons}>
+                <View style={styles.iconButton}>
+                  <BurgerMenu
+                    size={24}
+                    color="#FFFFFF"
+                    isOpen={isMenuOpen}
+                    onPress={() => setIsMenuOpen(!isMenuOpen)}
+                  />
+                </View>
+              </View>
             </View>
-          </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </ImageBackground>
 
         <ScrollView
           bounces={false}
           contentContainerStyle={styles.scrollContent}
         >
           {/* Image Skeleton */}
-          <View
-            style={[
-              styles.imageSection,
-              {
-                backgroundColor: "transparent",
-                borderBottomColor: "rgba(255,255,255,0.1)",
-              },
-            ]}
-          >
+          <View style={[styles.imageSection, { padding: 16 }]}>
             <SkeletonItem
-              width={140}
-              height={280}
-              borderRadius={8}
-              color={glassColor}
+              width="100%"
+              height={260}
+              borderRadius={12}
+              color={skeletonColor}
             />
           </View>
 
           {/* Info Skeleton */}
           <View style={styles.infoSection}>
             <SkeletonItem
-              width="70%"
+              width="60%"
               height={28}
-              style={{ marginBottom: 16 }}
-              color={glassColor}
+              borderRadius={6}
+              style={{ marginBottom: 12 }}
+              color={skeletonColor}
+            />
+            <SkeletonItem
+              width="40%"
+              height={16}
+              borderRadius={4}
+              color={skeletonColorLight}
             />
           </View>
 
           {/* Customization Card Skeleton */}
-          <View
-            style={[
-              styles.customizationCard,
-              {
-                borderColor: "rgba(255,255,255,0.2)",
-                backgroundColor: "rgba(255,255,255,0.05)",
-              },
-            ]}
-          >
+          <View style={styles.customizationCard}>
             <View style={{ padding: 16 }}>
               <SkeletonItem
                 width="50%"
                 height={20}
-                style={{ marginBottom: 20 }}
-                color={glassColor}
-              />
-              <SkeletonItem
-                width="100%"
-                height={40}
-                style={{ marginBottom: 12 }}
-                color={glassColor}
-              />
-              <SkeletonItem
-                width="100%"
-                height={40}
-                style={{ marginBottom: 12 }}
-                color={glassColor}
-              />
-              <SkeletonItem
-                width="100%"
-                height={40}
-                style={{ marginBottom: 24 }}
-                color={glassColor}
+                borderRadius={4}
+                style={{ marginBottom: 16 }}
+                color={skeletonColor}
               />
 
+              {/* Specifications Table Skeleton */}
+              <View
+                style={{
+                  borderWidth: 1,
+                  borderColor: "#EEEEEE",
+                  borderRadius: 6,
+                  padding: 12,
+                  marginBottom: 24,
+                }}
+              >
+                <SkeletonItem
+                  width="100%"
+                  height={24}
+                  borderRadius={4}
+                  style={{ marginBottom: 10 }}
+                  color={skeletonColor}
+                />
+                <SkeletonItem
+                  width="100%"
+                  height={20}
+                  borderRadius={4}
+                  style={{ marginBottom: 8 }}
+                  color={skeletonColorLight}
+                />
+                <SkeletonItem
+                  width="100%"
+                  height={20}
+                  borderRadius={4}
+                  style={{ marginBottom: 8 }}
+                  color={skeletonColorLight}
+                />
+                <SkeletonItem
+                  width="100%"
+                  height={20}
+                  borderRadius={4}
+                  color={skeletonColorLight}
+                />
+              </View>
+
+              {/* Dimension Selectors Skeleton */}
               <View
                 style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
+                  marginBottom: 24,
                 }}
               >
-                <SkeletonItem width="31%" height={50} color={glassColor} />
-                <SkeletonItem width="31%" height={50} color={glassColor} />
-                <SkeletonItem width="31%" height={50} color={glassColor} />
+                <SkeletonItem width="31%" height={45} borderRadius={8} color={skeletonColor} />
+                <SkeletonItem width="31%" height={45} borderRadius={8} color={skeletonColor} />
+                <SkeletonItem width="31%" height={45} borderRadius={8} color={skeletonColor} />
               </View>
+
+              {/* Estimate Banner Skeleton */}
+              <SkeletonItem
+                width="100%"
+                height={64}
+                borderRadius={10}
+                color={skeletonColor}
+              />
             </View>
           </View>
         </ScrollView>
-      </ImageBackground>
+      </View>
     );
   }
 
@@ -414,7 +578,9 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
             source={
               product.image_url
                 ? { uri: product.image_url }
-                : backgroundImages.woodTexture
+                : (product.slug || product.name || seriesName || "").toLowerCase().includes("rich")
+                ? require("../assets/images/door/nfc/NFC rich.png")
+                : require("../assets/images/door/nfc/NFC Legend.png")
             }
             style={styles.productImage}
             resizeMode="stretch"
@@ -422,11 +588,33 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
           <TouchableOpacity style={styles.favoriteButton}>
             <Ionicons name="heart-outline" size={24} color="#000" />
           </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={styles.shareButton}
+            onPress={async () => {
+              try {
+                const pName = product.slug || product.name || "NFC Wood Door";
+                const pImg = product.image_url ? `\n🖼️ Product Image:\n${product.image_url}\n` : "";
+                await Share.share({
+                  title: `${pName} - WudGres`,
+                  message: `🌟 Discover WudGres Premium Architectural Products 🌟\n\nI found this stunning design on the WudGres app and thought you'd love it!\n\n🪵 Product: ${pName}\n✨ Category: NFC Doors Collection\n${pImg}\nExplore premium doors, window shutters, and wood frames crafted for modern interiors.\n\n📲 View product & download app:\nhttps://wudgres.com`,
+                  url: product.image_url || "https://wudgres.com",
+                });
+              } catch (error) {
+                console.log("Error sharing:", error);
+              }
+            }}
+          >
+            <Ionicons name="share-social-outline" size={24} color="#000" />
+          </TouchableOpacity> */}
         </Animated.View>
 
         {/* Product Information */}
         <View style={styles.infoSection}>
-          <Text style={styles.productTitle}>{product.slug}</Text>
+          <Text style={styles.productTitle}>
+            {(product.slug || product.name || "").toLowerCase().includes("eco") || (product.slug || product.name || "").toLowerCase().includes("legend")
+              ? "NFC Legend"
+              : product.slug || product.name}
+          </Text>
           {/* <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Category: </Text>
                         <Text style={styles.infoValue}>{product.series?.name}</Text>
@@ -535,10 +723,10 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
             }}
           >
             {renderDropdown(
-              "Width (In)",
-              selectedWidth,
-              widths,
-              setSelectedWidth,
+              "Thickness (mm)",
+              selectedThickness,
+              thicknesses,
+              setSelectedThickness,
             )}
             {renderDropdown(
               "Height (In)",
@@ -547,10 +735,10 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
               setSelectedHeight,
             )}
             {renderDropdown(
-              "Thickness (mm)",
-              selectedThickness,
-              thicknesses,
-              setSelectedThickness,
+              "Width (In)",
+              selectedWidth,
+              widths,
+              setSelectedWidth,
             )}
           </View>
 
@@ -628,7 +816,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontSize: 18, fontFamily: "Unbounded_700Bold" }}>
+              <Text style={{ fontSize: 18, fontFamily: "Gilroy-Bold" }}>
                 Select{" "}
                 {modalConfig?.label.replace(" (In)", "").replace(" (mm)", "")}
               </Text>
@@ -663,8 +851,8 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
                       fontSize: 16,
                       fontFamily:
                         modalConfig.value === opt
-                          ? "Unbounded_700Bold"
-                          : "Unbounded_400Regular",
+                          ? "Gilroy-Regular"
+                          : "Gilroy-Regular",
                       color: "#000",
                     }}
                   >
@@ -731,12 +919,17 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
   },
+  shareButton: {
+    position: "absolute",
+    top: 56,
+    right: 16,
+  },
   infoSection: {
     padding: theme.spacing.md,
   },
   productTitle: {
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     marginBottom: 8,
   },
@@ -746,12 +939,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   infoValue: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
   },
   customizationCard: {
@@ -763,7 +956,7 @@ const styles = StyleSheet.create({
   },
   customizeTitle: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     color: "#666666",
     padding: 16,
     paddingBottom: 12,
@@ -774,7 +967,7 @@ const styles = StyleSheet.create({
   },
   disclaimerTitle: {
     fontSize: 16,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     // marginBottom: 8,
     paddingTop: 10,
@@ -782,7 +975,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 16,
   },
@@ -810,13 +1003,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
     borderRightWidth: 1,
     borderRightColor: "#EEEEEE",
   },
   tableHeaderText: {
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   dimensionsRow: {
@@ -832,7 +1025,7 @@ const styles = StyleSheet.create({
   },
   dropdownLabel: {
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 4,
   },
@@ -849,7 +1042,7 @@ const styles = StyleSheet.create({
   dropdownValue: {
     fontSize: 14,
     color: "#000000",
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
   },
   estimateBanner: {
     backgroundColor: "#333333",
@@ -863,7 +1056,7 @@ const styles = StyleSheet.create({
   estimateDetailText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     marginBottom: 4,
   },
   estimatePriceBox: {
@@ -873,12 +1066,12 @@ const styles = StyleSheet.create({
   estimateSubtitle: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     marginBottom: 2,
   },
   estimatePrice: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
   },
 });

@@ -10,6 +10,7 @@ import {
   Modal,
   Animated,
   Dimensions,
+  Share,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -336,6 +337,24 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
           <TouchableOpacity style={styles.favoriteButton}>
             <Ionicons name="heart-outline" size={24} color="#000" />
           </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={styles.shareButton}
+            onPress={async () => {
+              try {
+                const pName = product?.slug || product?.name || "NFC Door Frame";
+                const pImg = product?.image_url ? `\n🖼️ Product Image:\n${product.image_url}\n` : "";
+                await Share.share({
+                  title: `${pName} - WudGres`,
+                  message: `🌟 Discover WudGres Premium Architectural Products 🌟\n\nI found this stunning design on the WudGres app and thought you'd love it!\n\n🪵 Product: ${pName}\n✨ Category: NFC Door Frames Collection\n${pImg}\nExplore premium doors, window shutters, and wood frames crafted for modern interiors.\n\n📲 View product & download app:\nhttps://wudgres.com`,
+                  url: product?.image_url || "https://wudgres.com",
+                });
+              } catch (error) {
+                console.log("Error sharing:", error);
+              }
+            }}
+          >
+            <Ionicons name="share-social-outline" size={24} color="#000" />
+          </TouchableOpacity> */}
         </Animated.View>
 
         {/* Product Information */}
@@ -404,7 +423,7 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
               </View>
 
               {/* Table Body */}
-              {framePricing.map((item, index) => (
+              {framePricing.map((item: any, index: number) => (
                 <View
                   key={item.id}
                   style={[
@@ -555,7 +574,7 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontSize: 18, fontFamily: "Unbounded_700Bold" }}>
+              <Text style={{ fontSize: 18, fontFamily: "Gilroy-Bold" }}>
                 Select{" "}
                 {modalConfig?.label.replace(" (In)", "").replace(" (mm)", "")}
               </Text>
@@ -590,8 +609,8 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
                       fontSize: 16,
                       fontFamily:
                         modalConfig.value === opt
-                          ? "Unbounded_700Bold"
-                          : "Unbounded_400Regular",
+                          ? "Gilroy-Regular"
+                          : "Gilroy-Regular",
                       color: "#000",
                     }}
                   >
@@ -658,12 +677,17 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
   },
+  shareButton: {
+    position: "absolute",
+    top: 56,
+    right: 16,
+  },
   infoSection: {
     padding: theme.spacing.md,
   },
   productTitle: {
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     marginBottom: 8,
   },
@@ -673,12 +697,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   infoValue: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
   },
   customizationCard: {
@@ -690,7 +714,7 @@ const styles = StyleSheet.create({
   },
   customizeTitle: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     color: "#666666",
     padding: 16,
     paddingBottom: 12,
@@ -701,7 +725,7 @@ const styles = StyleSheet.create({
   },
   disclaimerTitle: {
     fontSize: 16,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     // marginBottom: 8,
     paddingTop: 10,
@@ -709,7 +733,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 16,
   },
@@ -737,13 +761,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
     borderRightWidth: 1,
     borderRightColor: "#EEEEEE",
   },
   tableHeaderText: {
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   dimensionsRow: {
@@ -759,7 +783,7 @@ const styles = StyleSheet.create({
   },
   dropdownLabel: {
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 4,
   },
@@ -776,7 +800,7 @@ const styles = StyleSheet.create({
   dropdownValue: {
     fontSize: 14,
     color: "#000000",
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
   },
   estimateBanner: {
     backgroundColor: "#333333",
@@ -790,7 +814,7 @@ const styles = StyleSheet.create({
   estimateDetailText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     marginBottom: 4,
   },
   estimatePriceBox: {
@@ -800,12 +824,12 @@ const styles = StyleSheet.create({
   estimateSubtitle: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     marginBottom: 2,
   },
   estimatePrice: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
   },
 });

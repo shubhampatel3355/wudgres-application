@@ -3,7 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
 import { BlurView } from 'expo-blur';
 
 import {
@@ -109,33 +109,50 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                         let icon;
                         if (route.name === 'HomeStack') {
                             icon = (
-                                <Ionicons
-                                    name={isFocused ? 'home' : 'home-outline'}
-                                    size={27}
-                                    color={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                                <Image
+                                    source={require('../assets/icons/home_icon.png')}
+                                    style={{
+                                        width: 27,
+                                        height: 27,
+                                        tintColor: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+                                    }}
+                                    resizeMode="contain"
                                 />
                             );
                         } else if (route.name === 'ProductsStack') {
                             icon = (
-                                <DoorsIcon
-                                    size={24}
-                                    color={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                                <Image
+                                    source={require('../assets/icons/product_icon.png')}
+                                    style={{
+                                        width: 24,
+                                        height: 24,
+                                        tintColor: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+                                    }}
+                                    resizeMode="contain"
                                 />
                             );
                         } else if (route.name === 'Stores') {
                             icon = (
-                                <Ionicons
-                                    name={isFocused ? 'location' : 'location-outline'}
-                                    size={24}
-                                    color={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                                <Image
+                                    source={require('../assets/icons/store_icon.png')}
+                                    style={{
+                                        width: 24,
+                                        height: 24,
+                                        tintColor: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+                                    }}
+                                    resizeMode="contain"
                                 />
                             );
                         } else if (route.name === 'Profile') {
                             icon = (
-                                <Ionicons
-                                    name={isFocused ? 'person' : 'person-outline'}
-                                    size={24}
-                                    color={isFocused ? ACTIVE_COLOR : INACTIVE_COLOR}
+                                <Image
+                                    source={require('../assets/icons/profile_icon.png')}
+                                    style={{
+                                        width: 24,
+                                        height: 24,
+                                        tintColor: isFocused ? ACTIVE_COLOR : INACTIVE_COLOR,
+                                    }}
+                                    resizeMode="contain"
                                 />
                             );
                         }
@@ -243,6 +260,7 @@ export const AppNavigator = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator
+                initialRouteName="Loader"
                 screenOptions={{
                     headerShown: false,
                     animation: 'slide_from_right',

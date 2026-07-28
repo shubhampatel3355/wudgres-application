@@ -312,9 +312,10 @@ export const StoreLocatorScreen = () => {
 
   // ── Derived: nearby (≤15 km) vs all ──
   const NEARBY_RADIUS_KM = 15;
+  const isSearching = searchQuery.trim().length > 0;
   const nearbyStores = filteredStores.filter((s) => s.distanceKm <= NEARBY_RADIUS_KM);
-  const displayedStores = showAllDealers ? filteredStores : nearbyStores;
-  const hasMoreDealers = !showAllDealers && filteredStores.length > nearbyStores.length;
+  const displayedStores = (showAllDealers || isSearching) ? filteredStores : nearbyStores;
+  const hasMoreDealers = !showAllDealers && !isSearching && filteredStores.length > nearbyStores.length;
 
   // ── Animations ──
   const mapHeight = useRef(new Animated.Value(MAP_EXPANDED)).current;
@@ -457,9 +458,9 @@ export const StoreLocatorScreen = () => {
 
       if (!text.trim()) {
         // Reset to full sorted list
-        if (userCoords) {
-          setFilteredStores(computeDistances(userCoords.latitude, userCoords.longitude, allStores));
-        }
+        const lat = userCoords?.latitude || 12.9716;
+        const lon = userCoords?.longitude || 77.5946;
+        setFilteredStores(computeDistances(lat, lon, allStores));
         setIsLoading(false);
         return;
       }
@@ -469,21 +470,86 @@ export const StoreLocatorScreen = () => {
       setShowCards(true);
 
       debounceRef.current = setTimeout(() => {
-        if (!userCoords) return;
-        const query = text.toLowerCase();
-        const filtered = computeDistances(userCoords.latitude, userCoords.longitude, allStores).filter(
-          (s) =>
-            s.Pincode.toLowerCase().includes(query) ||
-            s.Address.toLowerCase().includes(query) ||
-            s['Store Name'].toLowerCase().includes(query)
+        const lat = userCoords?.latitude || 12.9716;
+        const lon = userCoords?.longitude || 77.5946;
+        const query = text.trim().toLowerCase();
+        let filtered = computeDistances(lat, lon, allStores).filter(
+          (s) => {
+            const pincode = String(s.Pincode || '').toLowerCase();
+            const address = String(s.Address || '').toLowerCase();
+            const storeName = String(s['Store Name'] || '').toLowerCase();
+            const owner = String(s['Name Of Owner'] || '').toLowerCase();
+            const contact = String(s.Contact || '').toLowerCase();
+
+            // City name synonyms
+            const citySynonyms: [string, string][] = [
+              ['bangalore', 'bengaluru'],
+              ['mumbai', 'bombay'],
+              ['chennai', 'madras'],
+              ['kolkata', 'calcutta'],
+              ['gurugram', 'gurgaon'],
+              ['vadodara', 'baroda'],
+              ['kochi', 'cochin'],
+              ['trivandrum', 'thiruvananthapuram'],
+              ['mysore', 'mysuru'],
+              ['pondicherry', 'puducherry'],
+              ['banaras', 'varanasi'],
+              ['calicut', 'kozhikode'],
+              ['trichy', 'tiruchirappalli'],
+              ['vizag', 'visakhapatnam'],
+            ];
+
+            let isAliasMatch = false;
+            for (const [a, b] of citySynonyms) {
+              if (query.includes(a) && (address.includes(b) || storeName.includes(b))) isAliasMatch = true;
+              if (query.includes(b) && (address.includes(a) || storeName.includes(a))) isAliasMatch = true;
+              if (a.includes(query) && (address.includes(b) || storeName.includes(b))) isAliasMatch = true;
+              if (b.includes(query) && (address.includes(a) || storeName.includes(a))) isAliasMatch = true;
+            }
+
+            return (
+              pincode.includes(query) ||
+              address.includes(query) ||
+              storeName.includes(query) ||
+              owner.includes(query) ||
+              contact.includes(query) ||
+              isAliasMatch
+            );
+          }
         );
+
+        // ── Smart Pincode & Nearby Fallback ──
+        // When searching a pincode or location with 0 exact string matches (e.g. 560078),
+        // match by pincode region prefix (e.g. 560 for Bangalore urban), or fall back to closest nearby dealers!
+        if (filtered.length === 0 && query.length > 0) {
+          const allWithDist = computeDistances(lat, lon, allStores);
+
+          if (/^\d{2,}/.test(query)) {
+            const prefix3 = query.slice(0, 3);
+            let prefixMatches = allWithDist.filter((s) => String(s.Pincode || '').startsWith(prefix3));
+            if (prefixMatches.length === 0 && query.length >= 2) {
+              const prefix2 = query.slice(0, 2);
+              prefixMatches = allWithDist.filter((s) => String(s.Pincode || '').startsWith(prefix2));
+            }
+            if (prefixMatches.length > 0) {
+              filtered = prefixMatches;
+            }
+          }
+
+          // If still no matches, show closest dealers within 100 km (or top 3 closest overall)
+          if (filtered.length === 0) {
+            const within100 = allWithDist.filter((s) => s.distanceKm <= 100);
+            filtered = within100.length > 0 ? within100 : allWithDist.slice(0, 3);
+          }
+        }
+
         setFilteredStores(filtered);
         setIsLoading(false);
 
-        // Fit map tightly to nearby filtered results
+        // Fit map tightly to filtered results
         if (filtered.length > 0 && mapRef.current) {
           const nearby = filtered.filter((s) => s.distanceKm <= NEARBY_RADIUS_KM);
-          const toFit = nearby.length > 0 ? nearby : filtered;
+          const toFit = (nearby.length > 0 && !text.trim()) ? nearby : filtered;
           mapRef.current.fitToCoordinates(
             toFit.map((f) => ({ latitude: f.lat, longitude: f.lon })),
             {
@@ -494,7 +560,7 @@ export const StoreLocatorScreen = () => {
         }
       }, 300);
     },
-    [userCoords]
+    [userCoords, allStores]
   );
 
   // ── Find Near Me button ──
@@ -557,7 +623,7 @@ export const StoreLocatorScreen = () => {
     // 2. Expand list if necessary
     const isNearby = store.distanceKm <= NEARBY_RADIUS_KM;
     let targetList = displayedStores;
-    if (!isNearby && !showAllDealers) {
+    if (!isNearby && !showAllDealers && !isSearching) {
       setShowAllDealers(true);
       targetList = filteredStores;
     }
@@ -608,11 +674,11 @@ export const StoreLocatorScreen = () => {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="search-outline" size={48} color="#999" />
-      <Text style={styles.emptyTitle}>No dealers nearby</Text>
+      <Text style={styles.emptyTitle}>{isSearching ? 'No dealers found' : 'No dealers nearby'}</Text>
       <Text style={styles.emptySubtitle}>
-        No dealers found within {NEARBY_RADIUS_KM} km
+        {isSearching ? `No dealers matching "${searchQuery}"` : `No dealers found within ${NEARBY_RADIUS_KM} km`}
       </Text>
-      {filteredStores.length > 0 && (
+      {!isSearching && filteredStores.length > 0 && (
         <TouchableOpacity
           style={styles.viewAllButtonInline}
           activeOpacity={0.7}
@@ -704,7 +770,7 @@ export const StoreLocatorScreen = () => {
         <Animated.View style={styles.resultsContainer}>
           <View style={styles.resultsHeader}>
             <Text style={styles.resultsTitle}>
-              {showAllDealers ? 'All Dealers' : 'Nearby Dealers'}
+              {isSearching ? 'Search Results' : showAllDealers ? 'All Dealers' : 'Nearby Dealers'}
             </Text>
             {!isLoading && (
               <Text style={styles.resultsCount}>
@@ -790,7 +856,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     color: '#333',
-    fontWeight: '400',
+    
   },
   nearMeButton: {
     backgroundColor: theme.colors.primary,
@@ -809,7 +875,7 @@ const styles = StyleSheet.create({
   nearMeText: {
     color: '#FFF',
     fontSize: 12,
-    fontWeight: '700',
+    
     letterSpacing: 1,
   },
 
@@ -828,12 +894,12 @@ const styles = StyleSheet.create({
   resultsTitle: {
     fontSize: 14,
     color: '#222',
-    fontWeight: '700',
+    
   },
   resultsCount: {
     fontSize: 11,
     color: '#888',
-    fontWeight: '600',
+    
     letterSpacing: 0.5,
   },
   listContent: {
@@ -877,7 +943,7 @@ const styles = StyleSheet.create({
   storeType: {
     fontSize: 11,
     color: '#AAA',
-    fontWeight: '600',
+    
     letterSpacing: 0.8,
   },
   statusBadge: {
@@ -895,13 +961,13 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 9,
-    fontWeight: '700',
+    
     letterSpacing: 0.4,
   },
   storeName: {
     fontSize: 14,
     color: '#1A1A1A',
-    fontWeight: '700',
+    
   },
   locationRow: {
     flexDirection: 'row',
@@ -923,7 +989,7 @@ const styles = StyleSheet.create({
   distanceText: {
     fontSize: 12,
     color: theme.colors.primary,
-    fontWeight: '600',
+    
   },
   buttonRow: {
     flexDirection: 'row',
@@ -944,7 +1010,7 @@ const styles = StyleSheet.create({
   callText: {
     fontSize: 13,
     color: '#333',
-    fontWeight: '600',
+    
   },
   mapButton: {
     flex: 1,
@@ -959,7 +1025,7 @@ const styles = StyleSheet.create({
   mapText: {
     fontSize: 13,
     color: '#FFF',
-    fontWeight: '600',
+    
   },
 
   // Empty state
@@ -971,7 +1037,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 17,
-    fontWeight: '600',
+    
     color: '#555',
   },
   emptySubtitle: {
@@ -986,7 +1052,7 @@ const styles = StyleSheet.create({
   },
   viewAllButtonInlineText: {
     fontSize: 14,
-    fontWeight: '600',
+    
     color: theme.colors.primary,
   },
 
@@ -1004,7 +1070,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
     borderWidth: 1.5,
-    borderColor: theme.colors.primary + '30',
+    borderColor: "transparent" + '30',
     borderStyle: 'dashed',
   },
   viewAllIconContainer: {
@@ -1021,7 +1087,7 @@ const styles = StyleSheet.create({
   },
   viewAllTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    
     color: '#333',
     marginBottom: 2,
   },

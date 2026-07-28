@@ -241,7 +241,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   PLY CORE :
@@ -263,7 +263,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   PLY FACE :
@@ -285,7 +285,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   SIZE (FT) :
@@ -307,7 +307,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   THICKNESS :
@@ -364,7 +364,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   PLY CORE :
@@ -386,7 +386,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   PLY FACE :
@@ -408,7 +408,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   SIZE (FT) :
@@ -430,7 +430,7 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 <Text
                   style={[
                     styles.tableCell,
-                    { flex: 1, fontFamily: "Unbounded_700Bold", color: "#000" },
+                    { flex: 1, fontFamily: "Gilroy-Regular", color: "#000" },
                   ]}
                 >
                   THICKNESS :
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
   },
   productTitle: {
     fontSize: 20,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     marginBottom: 8,
   },
@@ -521,12 +521,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   infoValue: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
   },
   customizationCard: {
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   },
   customizeTitle: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     color: "#666666",
     padding: 16,
     paddingBottom: 12,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   },
   disclaimerTitle: {
     fontSize: 16,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     // marginBottom: 8,
     paddingTop: 10,
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 16,
   },
@@ -585,14 +585,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 4,
     fontSize: 9,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
     borderRightWidth: 1,
     borderRightColor: "#EEEEEE",
     justifyContent: "center",
   },
   tableHeaderText: {
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   dimensionsRow: {
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   },
   dropdownLabel: {
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 4,
   },
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   dropdownValue: {
     fontSize: 14,
     color: "#000000",
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
   },
   estimateBanner: {
     backgroundColor: "#333333",
@@ -639,7 +639,7 @@ const styles = StyleSheet.create({
   estimateDetailText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     marginBottom: 4,
   },
   estimatePriceBox: {
@@ -649,12 +649,12 @@ const styles = StyleSheet.create({
   estimateSubtitle: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     marginBottom: 2,
   },
   estimatePrice: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
   },
 });

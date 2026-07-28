@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Save, Upload, Video, Image as ImageIcon, Plus, Trash2, GripVertical, AlertCircle } from 'lucide-react';
+import { Save, Upload, Video, Image as ImageIcon, Plus, Trash2, AlertCircle, MonitorPlay } from 'lucide-react';
 
 interface HeroContent {
   id: string;
@@ -48,7 +48,6 @@ export default function HomeContentManager() {
           if (!insertError && newData) {
             setContent(newData);
           } else {
-             // Fallback
             setContent(defaultData);
           }
         } else {
@@ -103,7 +102,7 @@ export default function HomeContentManager() {
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
       const filePath = `${type}s/${fileName}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('app-content')
         .upload(filePath, file);
 
@@ -150,46 +149,62 @@ export default function HomeContentManager() {
       if (url) newUrls.push(url);
     }
     
-    setContent({
-      ...content,
-      carousel_images: [...content.carousel_images, ...newUrls]
-    });
+    setContent(prev => prev ? {
+      ...prev,
+      carousel_images: [...prev.carousel_images, ...newUrls]
+    } : prev);
+    
+    // Reset the input value so the same file can be uploaded again if needed
+    e.target.value = '';
     setUploading(false);
   };
 
   const removeCarouselImage = (index: number) => {
-    if (!content) return;
-    const newImages = [...content.carousel_images];
-    newImages.splice(index, 1);
-    setContent({ ...content, carousel_images: newImages });
+    setContent(prev => {
+      if (!prev) return prev;
+      const newImages = [...prev.carousel_images];
+      newImages.splice(index, 1);
+      return { ...prev, carousel_images: newImages };
+    });
   };
 
   const moveImage = (index: number, direction: 'up' | 'down') => {
-    if (!content) return;
-    const newImages = [...content.carousel_images];
-    if (direction === 'up' && index > 0) {
-      [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
-    } else if (direction === 'down' && index < newImages.length - 1) {
-      [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]];
-    }
-    setContent({ ...content, carousel_images: newImages });
+    setContent(prev => {
+      if (!prev) return prev;
+      const newImages = [...prev.carousel_images];
+      if (direction === 'up' && index > 0) {
+        [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+      } else if (direction === 'down' && index < newImages.length - 1) {
+        [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]];
+      }
+      return { ...prev, carousel_images: newImages };
+    });
   };
 
   if (loading) {
-    return <div className="page-header"><h2>Loading...</h2></div>;
+    return <div className="animate-fade-in"><h1 className="page-title">Loading...</h1></div>;
   }
 
   return (
-    <div className="home-content-manager">
-      <div className="page-header">
-        <div>
-          <h2>Home Screen Content</h2>
-          <p>Manage the main hero section of the mobile app</p>
-        </div>
+    <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1 className="page-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <MonitorPlay size={24} className="text-primary" /> App Home Content
+        </h1>
         <button 
-          className="btn-primary" 
           onClick={handleSave} 
           disabled={saving || uploading}
+          style={{ 
+            padding: '0.75rem 1.5rem', 
+            background: 'var(--accent-gold)', 
+            color: 'var(--bg-primary)', 
+            borderRadius: '4px',
+            fontWeight: 600,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}
         >
           <Save size={18} />
           {saving ? 'Saving...' : 'Save Changes'}
@@ -197,91 +212,96 @@ export default function HomeContentManager() {
       </div>
 
       {error && (
-        <div className="alert error">
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
           <AlertCircle size={20} />
           <span>{error}</span>
         </div>
       )}
 
       {success && (
-        <div className="alert success">
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
           <Save size={20} />
           <span>{success}</span>
         </div>
       )}
 
       {content && (
-        <div className="content-container" style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem' }}>
+          
           {/* Settings Panel */}
-          <div className="card" style={{ flex: 1 }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>Media Type</h3>
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+              Media Configuration
+            </h2>
             
-            <div className="type-selector" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
               <div 
-                className={`type-option ${content.media_type === 'video' ? 'active' : ''}`}
                 onClick={() => setContent({ ...content, media_type: 'video' })}
                 style={{ 
-                  flex: 1, padding: '1.5rem', borderRadius: '8px', border: `2px solid ${content.media_type === 'video' ? 'var(--primary-color)' : '#eee'}`, 
+                  flex: 1, padding: '1.5rem', borderRadius: '8px', 
+                  border: `2px solid ${content.media_type === 'video' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.1)'}`, 
                   cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
-                  backgroundColor: content.media_type === 'video' ? 'var(--primary-light)' : 'white'
+                  background: content.media_type === 'video' ? 'rgba(212, 175, 55, 0.1)' : 'rgba(0,0,0,0.2)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <Video size={32} color={content.media_type === 'video' ? 'var(--primary-color)' : '#666'} />
-                <span style={{ fontWeight: 'bold' }}>Auto-playing Video</span>
+                <Video size={32} color={content.media_type === 'video' ? 'var(--accent-gold)' : 'var(--text-secondary)'} />
+                <span style={{ fontWeight: 'bold', color: content.media_type === 'video' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Auto-playing Video</span>
               </div>
               
               <div 
-                className={`type-option ${content.media_type === 'carousel' ? 'active' : ''}`}
                 onClick={() => setContent({ ...content, media_type: 'carousel' })}
                 style={{ 
-                  flex: 1, padding: '1.5rem', borderRadius: '8px', border: `2px solid ${content.media_type === 'carousel' ? 'var(--primary-color)' : '#eee'}`, 
+                  flex: 1, padding: '1.5rem', borderRadius: '8px', 
+                  border: `2px solid ${content.media_type === 'carousel' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.1)'}`, 
                   cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem',
-                  backgroundColor: content.media_type === 'carousel' ? 'var(--primary-light)' : 'white'
+                  background: content.media_type === 'carousel' ? 'rgba(212, 175, 55, 0.1)' : 'rgba(0,0,0,0.2)',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <ImageIcon size={32} color={content.media_type === 'carousel' ? 'var(--primary-color)' : '#666'} />
-                <span style={{ fontWeight: 'bold' }}>Image Carousel</span>
+                <ImageIcon size={32} color={content.media_type === 'carousel' ? 'var(--accent-gold)' : 'var(--text-secondary)'} />
+                <span style={{ fontWeight: 'bold', color: content.media_type === 'carousel' ? 'var(--accent-gold)' : 'var(--text-secondary)' }}>Image Carousel</span>
               </div>
             </div>
 
             {/* Video Settings */}
             {content.media_type === 'video' && (
-              <div className="settings-section">
-                <div className="form-group">
-                  <label>Video File (MP4)</label>
-                  <div className="upload-box" style={{ padding: '1.5rem', border: '1px dashed #ccc', borderRadius: '8px', textAlign: 'center', marginBottom: '1rem' }}>
+              <div className="animate-fade-in">
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Video File (MP4)</label>
+                  <div style={{ padding: '2rem', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', textAlign: 'center', background: 'rgba(0,0,0,0.2)' }}>
                     <input type="file" accept="video/mp4,video/quicktime" onChange={handleVideoUpload} style={{ display: 'none' }} id="video-upload" />
-                    <label htmlFor="video-upload" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                      <Upload size={24} color="#666" />
+                    <label htmlFor="video-upload" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'var(--text-primary)' }}>
+                      <Upload size={28} className="text-primary" />
                       <span>{uploading ? 'Uploading...' : 'Click to upload a new video'}</span>
                     </label>
                   </div>
                   {content.video_url && (
-                    <div style={{ padding: '0.5rem', backgroundColor: '#f5f5f5', borderRadius: '4px', wordBreak: 'break-all', fontSize: '0.9rem' }}>
-                      <strong>Current:</strong> {content.video_url}
+                    <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderRadius: '4px', wordBreak: 'break-all', fontSize: '0.9rem', marginTop: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <strong style={{ color: 'var(--accent-gold)' }}>Current:</strong> {content.video_url}
                     </div>
                   )}
                   {!content.video_url && (
-                    <div style={{ color: '#888', fontSize: '0.9rem' }}>Using default built-in video</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Using default built-in video</div>
                   )}
                 </div>
 
-                <div className="form-group" style={{ marginTop: '1.5rem' }}>
-                  <label>Poster Image (Shows while video loads)</label>
-                  <div className="upload-box" style={{ padding: '1.5rem', border: '1px dashed #ccc', borderRadius: '8px', textAlign: 'center', marginBottom: '1rem' }}>
+                <div style={{ marginTop: '2rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>Poster Image (Shows while video loads)</label>
+                  <div style={{ padding: '2rem', border: '1px dashed rgba(255,255,255,0.2)', borderRadius: '8px', textAlign: 'center', background: 'rgba(0,0,0,0.2)' }}>
                     <input type="file" accept="image/*" onChange={handlePosterUpload} style={{ display: 'none' }} id="poster-upload" />
-                    <label htmlFor="poster-upload" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-                      <ImageIcon size={24} color="#666" />
+                    <label htmlFor="poster-upload" style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', color: 'var(--text-primary)' }}>
+                      <ImageIcon size={28} className="text-primary" />
                       <span>{uploading ? 'Uploading...' : 'Click to upload a poster image'}</span>
                     </label>
                   </div>
                   {content.poster_url && (
-                    <div style={{ marginTop: '0.5rem' }}>
-                      <img src={content.poster_url} alt="Poster" style={{ height: '100px', borderRadius: '4px', objectFit: 'cover' }} />
+                    <div style={{ marginTop: '1rem' }}>
+                      <img src={content.poster_url} alt="Poster" style={{ height: '120px', borderRadius: '4px', objectFit: 'cover', border: '1px solid rgba(255,255,255,0.1)' }} />
                     </div>
                   )}
                   {!content.poster_url && (
-                    <div style={{ color: '#888', fontSize: '0.9rem' }}>Using default built-in poster</div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>Using default built-in poster</div>
                   )}
                 </div>
               </div>
@@ -289,31 +309,31 @@ export default function HomeContentManager() {
 
             {/* Carousel Settings */}
             {content.media_type === 'carousel' && (
-              <div className="settings-section">
+              <div className="animate-fade-in">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <label style={{ margin: 0 }}>Carousel Images</label>
+                  <label style={{ margin: 0, color: 'var(--text-secondary)' }}>Carousel Images</label>
                   <input type="file" accept="image/*" multiple onChange={handleCarouselImageUpload} style={{ display: 'none' }} id="carousel-upload" />
-                  <label htmlFor="carousel-upload" className="btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', padding: '0.5rem 1rem', borderRadius: '4px', border: '1px solid #ccc', alignItems: 'center', gap: '0.5rem' }}>
+                  <label htmlFor="carousel-upload" style={{ cursor: 'pointer', display: 'inline-flex', padding: '0.5rem 1rem', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: 'white', alignItems: 'center', gap: '0.5rem', border: '1px solid rgba(255,255,255,0.1)', transition: 'background 0.2s ease' }}>
                     <Plus size={16} /> Add Images
                   </label>
                 </div>
                 
                 {content.carousel_images.length === 0 ? (
-                  <div style={{ padding: '2rem', textAlign: 'center', backgroundColor: '#f9f9f9', borderRadius: '8px', color: '#888' }}>
+                  <div style={{ padding: '2.5rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', color: 'var(--text-muted)', border: '1px dashed rgba(255,255,255,0.1)' }}>
                     No images added yet. Add at least one image to display the carousel.
                   </div>
                 ) : (
-                  <div className="image-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {content.carousel_images.map((url, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.5rem', backgroundColor: '#fff', border: '1px solid #eee', borderRadius: '6px' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
-                          <button onClick={() => moveImage(idx, 'up')} disabled={idx === 0} style={{ background: 'none', border: 'none', cursor: idx === 0 ? 'default' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}>▲</button>
-                          <button onClick={() => moveImage(idx, 'down')} disabled={idx === content.carousel_images.length - 1} style={{ background: 'none', border: 'none', cursor: idx === content.carousel_images.length - 1 ? 'default' : 'pointer', opacity: idx === content.carousel_images.length - 1 ? 0.3 : 1 }}>▼</button>
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer', gap: '0.25rem' }}>
+                          <button onClick={() => moveImage(idx, 'up')} disabled={idx === 0} style={{ color: 'var(--text-secondary)', cursor: idx === 0 ? 'default' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}>▲</button>
+                          <button onClick={() => moveImage(idx, 'down')} disabled={idx === content.carousel_images.length - 1} style={{ color: 'var(--text-secondary)', cursor: idx === content.carousel_images.length - 1 ? 'default' : 'pointer', opacity: idx === content.carousel_images.length - 1 ? 0.3 : 1 }}>▼</button>
                         </div>
-                        <img src={url} alt={`Slide ${idx + 1}`} style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-                        <span style={{ flex: 1, fontSize: '0.8rem', color: '#666', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{url}</span>
-                        <button onClick={() => removeCarouselImage(idx)} style={{ background: 'none', border: 'none', color: 'var(--danger-color)', cursor: 'pointer' }}>
-                          <Trash2 size={18} />
+                        <img src={url} alt={`Slide ${idx + 1}`} style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)' }} />
+                        <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{url}</span>
+                        <button onClick={() => removeCarouselImage(idx)} style={{ color: '#ef4444', padding: '0.5rem', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', transition: 'background 0.2s ease' }}>
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
@@ -324,33 +344,46 @@ export default function HomeContentManager() {
           </div>
 
           {/* Preview Panel */}
-          <div className="card" style={{ width: '350px', display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ marginBottom: '1.5rem' }}>App Preview</h3>
-            <div style={{ width: '100%', height: '400px', backgroundColor: '#000', borderRadius: '16px', overflow: 'hidden', position: 'relative', border: '4px solid #333' }}>
+          <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: 'fit-content' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '1rem' }}>
+              App Preview
+            </h2>
+            <div style={{ 
+              width: '100%', 
+              aspectRatio: '9/16', // Approximate mobile aspect ratio
+              maxHeight: '450px',
+              backgroundColor: '#000', 
+              borderRadius: '24px', 
+              overflow: 'hidden', 
+              position: 'relative', 
+              border: '6px solid #333',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
+            }}>
               {content.media_type === 'video' ? (
                 content.video_url ? (
                   <video src={content.video_url} poster={content.poster_url || ''} autoPlay loop muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexDirection: 'column', gap: '1rem' }}>
-                    <Video size={48} color="#666" />
-                    <span>Default App Video</span>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexDirection: 'column', gap: '1rem', background: '#111' }}>
+                    <Video size={48} opacity={0.5} />
+                    <span style={{ fontSize: '0.9rem' }}>Default App Video</span>
                   </div>
                 )
               ) : (
                 content.carousel_images.length > 0 ? (
                   <img src={content.carousel_images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Preview" />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexDirection: 'column', gap: '1rem' }}>
-                    <ImageIcon size={48} color="#666" />
-                    <span>Empty Carousel</span>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', flexDirection: 'column', gap: '1rem', background: '#111' }}>
+                    <ImageIcon size={48} opacity={0.5} />
+                    <span style={{ fontSize: '0.9rem' }}>Empty Carousel</span>
                   </div>
                 )
               )}
             </div>
-            <p style={{ textAlign: 'center', color: '#888', fontSize: '0.8rem', marginTop: '1rem' }}>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '1.5rem' }}>
               Changes will appear in the app once saved.
             </p>
           </div>
+
         </div>
       )}
     </div>

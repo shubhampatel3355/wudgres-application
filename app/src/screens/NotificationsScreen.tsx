@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.md,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Bold',
     color: theme.colors.primaryDark,
     marginBottom: 16,
   },
@@ -204,13 +204,13 @@ const styles = StyleSheet.create({
   },
   settingTitle: {
     fontSize: theme.fontSize.md,
-    fontFamily: 'Unbounded_500Medium',
+    fontFamily: 'Gilroy-Bold',
     color: theme.colors.textDark,
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textMuted,
     lineHeight: 18,
   },
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: theme.fontSize.sm,
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Regular',
     color: theme.colors.textMuted,
     lineHeight: 20,
   }

@@ -51,14 +51,15 @@ export const theme = {
     },
 
     fontSize: {
-        fontFamily: 'Unbounded_400Regular',
-        xs: 10,
-        sm: 12,
-        md: 14,
-        lg: 16,
-        xl: 18,
-        xxl: 24,
-        xxxl: 32,
+        fontFamily: 'Gilroy-Regular',
+        fontFamilyBold: 'Gilroy-Bold',
+        xs: 14,
+        sm: 16,
+        md: 18,
+        lg: 20,
+        xl: 22,
+        xxl: 28,
+        xxxl: 36,
     },
 };
 

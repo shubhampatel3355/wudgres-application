@@ -167,43 +167,76 @@ const SeriesManager = () => {
         <div style={{ overflowY: 'auto', flex: 1, padding: '0 2rem 2rem' }}>
           {loading ? <div style={{ color: 'var(--text-muted)' }}>Loading...</div> : null}
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             {seriesList.filter(s => !s.parent_id).map(series => {
               const isActive = activeSeries?.id === series.id;
               const cat = categories.find(c => c.id === series.category_id);
+              const subSeries = seriesList.filter(s => s.parent_id === series.id);
+              
               return (
-                <div 
-                  key={series.id} 
-                  onClick={() => startEdit(series)}
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    borderRadius: '12px',
-                    padding: '1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    cursor: 'pointer',
-                    border: isActive ? '1px solid var(--accent-gold)' : '1px solid transparent',
-                    boxShadow: isActive ? '0 0 15px rgba(192, 162, 103, 0.05)' : 'none',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
-                  <div style={{ width: '50px', height: '50px', borderRadius: '8px', background: 'var(--bg-tertiary)', overflow: 'hidden' }}>
-                    {series.thumbnail_url ? (
-                      <img src={series.thumbnail_url} alt={series.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                        <FolderTree size={20} />
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '1rem' }}>{series.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                       {cat ? cat.name : 'Uncategorized'}
+                <div key={series.id}>
+                  <div 
+                    onClick={() => startEdit(series)}
+                    style={{
+                      background: isActive ? 'var(--bg-secondary)' : 'transparent',
+                      borderRadius: '8px',
+                      padding: '0.85rem 1rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      cursor: 'pointer',
+                      border: isActive ? '1px solid var(--accent-gold)' : '1px solid transparent',
+                      boxShadow: isActive ? '0 0 15px rgba(192, 162, 103, 0.05)' : 'none',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'var(--bg-tertiary)', overflow: 'hidden' }}>
+                      {series.thumbnail_url ? (
+                        <img src={series.thumbnail_url} alt={series.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+                          <FolderTree size={16} />
+                        </div>
+                      )}
                     </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: isActive ? 600 : 500, color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '0.95rem' }}>{series.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                         {cat ? cat.name : 'Uncategorized'}
+                      </div>
+                    </div>
+                    <ArrowRight size={14} style={{ color: isActive ? 'var(--accent-gold)' : 'transparent' }} />
                   </div>
-                  <ArrowRight size={16} style={{ color: isActive ? 'var(--accent-gold)' : 'var(--text-muted)' }} />
+
+                  {subSeries.length > 0 && (
+                    <div style={{ marginLeft: '3rem', marginTop: '0.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      {subSeries.map(sub => {
+                        const isSubActive = activeSeries?.id === sub.id;
+                        return (
+                          <div 
+                            key={sub.id}
+                            onClick={() => startEdit(sub)}
+                            style={{
+                              background: isSubActive ? 'var(--bg-secondary)' : 'transparent',
+                              borderRadius: '8px',
+                              padding: '0.6rem 1rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.75rem',
+                              cursor: 'pointer',
+                              border: isSubActive ? '1px solid var(--accent-gold)' : '1px solid transparent',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <div style={{ flex: 1, fontWeight: isSubActive ? 600 : 400, color: isSubActive ? 'var(--text-primary)' : 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                              {sub.name}
+                            </div>
+                            <ArrowRight size={12} style={{ color: isSubActive ? 'var(--accent-gold)' : 'transparent' }} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}

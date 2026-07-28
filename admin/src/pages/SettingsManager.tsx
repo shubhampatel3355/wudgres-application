@@ -22,9 +22,7 @@ const SettingsManager = () => {
     twoFactor: false
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
+
 
   const fetchProfile = async () => {
     try {
@@ -50,6 +48,10 @@ const SettingsManager = () => {
       console.error('Error fetching profile:', error);
     }
   };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();

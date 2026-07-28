@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginLeft: 0,

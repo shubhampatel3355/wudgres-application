@@ -15,6 +15,7 @@ import { ProductCard, GlassMenu, BurgerMenu } from "../components";
 import { theme } from "../theme";
 import { backgroundImages } from "../data/mockData";
 import { supabase } from "../lib/supabase";
+import { getCached, setCached } from "../lib/queryCache";
 
 const COLUMN_COUNT = 2;
 
@@ -40,25 +41,47 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
   }, [selectedSeries]);
 
   const fetchSeriesTabs = async () => {
+    const CACHE_KEY = 'legacyWoodSeries';
+    const cached = getCached(CACHE_KEY);
+    if (cached) {
+      setSpecificSeriesTabs(cached);
+      setSelectedSeries(cached[0].id);
+      return;
+    }
+
     setIsLoading(true);
-    const { data } = await supabase
+    // Try new name first, fallback to old name
+    let { data } = await supabase
       .from("series")
       .select("*")
-      .ilike("name", "Timbor%")
+      .or("name.ilike.Legacy Wood%,name.ilike.Timbor%")
       .order("order_index");
     if (data && data.length > 0) {
+      setCached(CACHE_KEY, data);
       setSpecificSeriesTabs(data);
-      setSelectedSeries(data[0].name);
+      setSelectedSeries(data[0].id);
     }
   };
 
   const fetchProducts = async () => {
+    if (!selectedSeries) return;
+    const CACHE_KEY = `legacyWoodProducts:${selectedSeries}`;
+    const cached = getCached(CACHE_KEY);
+    if (cached) {
+      setDisplayProducts(cached);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     const { data } = await supabase
       .from("products")
       .select("*, series!inner(name)")
-      .eq("series.name", selectedSeries);
-    if (data) setDisplayProducts(data);
+      .eq("series_id", selectedSeries)
+      .order("name", { ascending: true });
+    const result = data || [];
+    setCached(CACHE_KEY, result);
+    setDisplayProducts(result);
     setIsLoading(false);
   };
 
@@ -72,14 +95,16 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
       ? { uri: series.thumbnail_url }
       : backgroundImages.woodTexture;
 
-    // Strip out "Timbor" for cleaner tab labels
-    const tabLabel = series.name.replace(/^Timbor\s+/i, "") || "Acacia";
+    // Strip out series prefix for cleaner tab labels
+    const tabLabel = series.name
+      .replace(/^Legacy Wood\s*/i, "")
+      .replace(/^Timbor\s*/i, "") || "Legacy Wood";
 
     return (
       <TouchableOpacity
         key={series.id || series.name}
         style={styles.seriesTab}
-        onPress={() => setSelectedSeries(series.name)}
+        onPress={() => setSelectedSeries(series.id)}
       >
         <View
           style={[
@@ -99,7 +124,7 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
   };
 
   const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
+    <ProductCard textColor="#333333"
       image={
         item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
       }
@@ -148,7 +173,7 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>Timbor Series</Text>
+            <Text style={styles.title}>Legacy Wood Series</Text>
           </View>
         </SafeAreaView>
       </ImageBackground>
@@ -162,7 +187,7 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
             numColumns={COLUMN_COUNT}
             showsVerticalScrollIndicator={false}
             renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
+              <ProductCard textColor="#333333" image={null} name="" index={index} showSkeleton={true} />
             )}
             contentContainerStyle={styles.productList}
             columnWrapperStyle={styles.row}
@@ -243,7 +268,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -260,7 +285,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginBottom: theme.spacing.sm,
   },
@@ -288,7 +313,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -296,7 +321,7 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",
@@ -309,3 +334,4 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
+

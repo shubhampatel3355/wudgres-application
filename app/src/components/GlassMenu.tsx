@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     },
     menuItemText: {
         fontSize: 22,
-        fontFamily: 'Unbounded_500Medium',
+        fontFamily: 'Gilroy-Bold',
         color: '#ffffff',
         letterSpacing: 0.5,
     },
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     },
     brandText: {
         fontSize: 20,
-        fontFamily: 'Unbounded_700Bold',
+        fontFamily: 'Gilroy-Bold',
         color: '#ffffff',
         letterSpacing: 2,
     },
@@ -240,14 +240,14 @@ const styles = StyleSheet.create({
     },
     tagline: {
         fontSize: 14,
-        fontFamily: 'Unbounded_400Regular',
+        fontFamily: 'Gilroy-Regular',
         color: 'rgba(255, 255, 255, 0.7)',
         textAlign: 'center',
         marginBottom: 8,
     },
     copyright: {
         fontSize: 12,
-        fontFamily: 'Unbounded_400Regular',
+        fontFamily: 'Gilroy-Regular',
         color: 'rgba(255, 255, 255, 0.5)',
         textAlign: 'center',
     },

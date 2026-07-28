@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
+import * as SecureStore from "expo-secure-store";
 
 interface LoginScreenProps {
   navigation: any;
@@ -25,16 +26,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    // Check if the user already has a valid JWT session saved
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigation.replace("Main");
-      }
-    };
-    checkUser();
-  }, []);
+
 
   // Helper to format phone (assuming India +91 if no country code provided)
   const formatPhone = (p: string) => {
@@ -50,31 +42,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     setLoading(true);
     
     const isEmail = emailOrPhone.includes('@');
-    let loginEmail = emailOrPhone;
+    let loginEmail = emailOrPhone.trim();
 
     // If user entered a phone number, look up their email from profiles
     if (!isEmail) {
-      const formattedPhone = formatPhone(emailOrPhone);
+      const cleanPhone = emailOrPhone.trim().replace(/\s+/g, '');
+      const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : (cleanPhone.startsWith('0') ? `+91${cleanPhone.slice(1)}` : `+91${cleanPhone}`);
+      const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/^0/, '');
+      
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id")
-        .eq("phone", formattedPhone)
-        .single();
+        .select("email, phone")
+        .or(`phone.eq.${formattedPhone},phone.eq.${cleanPhone},phone.eq.${rawDigits},phone.eq.+91${rawDigits}`)
+        .limit(1)
+        .maybeSingle();
 
-      if (profileError || !profileData) {
+      if (profileError || !profileData || !profileData.email) {
         setLoading(false);
-        Alert.alert("Login Failed", "No account found with this phone number. Please use your email or register first.");
+        Alert.alert("Login Failed", "No account found with this phone number. Please use your email or check the number.");
         return;
       }
 
-      // Get the email from auth admin - fetch by querying auth users via RPC or use email from profile
-      // Since we can't access auth.users directly, prompt user to use email
-      setLoading(false);
-      Alert.alert(
-        "Use Email to Login",
-        "Phone login is not enabled. Please login with your email address instead.",
-      );
-      return;
+      loginEmail = profileData.email;
     }
     
     const { error } = await supabase.auth.signInWithPassword({
@@ -86,6 +75,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     if (error) {
       Alert.alert("Login Failed", error.message);
     } else {
+      await SecureStore.setItemAsync('session_start_time', Date.now().toString());
       navigation.replace("Loader");
     }
   };
@@ -157,9 +147,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          {/* <TouchableOpacity style={styles.forgotPassword}>
             <Text style={styles.forgotPasswordText}>forgot password</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Login Button */}
           <TouchableOpacity 
@@ -219,7 +209,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 16,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#ffffff",
     letterSpacing: 0.5,
   },
@@ -235,7 +225,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 24,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     textAlign: "center",
     marginBottom: 25,
@@ -253,7 +243,7 @@ const styles = StyleSheet.create({
     height: 50,
     color: "#000000",
     fontSize: 15,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
   },
   eyeIcon: {
     padding: 5,
@@ -265,7 +255,7 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     color: "#4b5563",
     fontSize: 12,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Regular",
     textDecorationLine: "underline",
   },
   loginButton: {
@@ -278,7 +268,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: "#ffffff",
     fontSize: 16,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
   },
   divider: {
     height: 1,
@@ -293,7 +283,7 @@ const styles = StyleSheet.create({
   newUserText: {
     color: "#000000",
     fontSize: 14,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
     marginRight: 15,
   },
   registerButton: {
@@ -305,6 +295,6 @@ const styles = StyleSheet.create({
   registerButtonText: {
     color: "#ffffff",
     fontSize: 14,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
   },
 });

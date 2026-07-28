@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginLeft: 0,
@@ -351,7 +351,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: theme.colors.textMuted,
     letterSpacing: 1,
   },
@@ -379,14 +379,14 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: theme.fontSize.lg,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textDark,
     marginBottom: 2,
   },
   userContact: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.textMuted,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     marginBottom: 2,
   },
   optionsContainer: {
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   optionText: {
     flex: 1,
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
     color: theme.colors.textDark,
   },
   dropdownContainer: {
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   },
   dropdownOptionText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
     color: theme.colors.textDark,
   },
   aboutSection: {
@@ -456,14 +456,14 @@ const styles = StyleSheet.create({
   },
   aboutTitle: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.primaryDark,
     marginBottom: theme.spacing.sm,
   },
   aboutText: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.textMuted,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     lineHeight: 20,
   },
   logoutButton: {
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   logoutText: {
     color: theme.colors.error,
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Regular",
     marginLeft: theme.spacing.sm,
   },
 });

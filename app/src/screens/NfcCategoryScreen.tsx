@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginLeft: 0,
@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     aspectRatio: 1.1,
     borderRadius: theme.borderRadius.lg,
     overflow: "hidden",
-    backgroundColor: "#1a1a1a",
+    backgroundColor: "transparent",
   },
   categoryImage: {
     width: "100%",
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   categoryName: {
     marginTop: theme.spacing.sm,
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Medium",
     color: theme.colors.textDark,
     textAlign: "center",
   },

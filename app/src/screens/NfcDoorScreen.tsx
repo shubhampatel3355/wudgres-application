@@ -2,30 +2,66 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   ImageBackground,
   Image,
+  Dimensions,
+  Animated,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { ProductCard, GlassMenu, BurgerMenu } from "../components";
+import { GlassMenu, BurgerMenu } from "../components";
 import { theme } from "../theme";
 import { backgroundImages } from "../data/mockData";
 import { supabase } from "../lib/supabase";
-
-const COLUMN_COUNT = 2;
+import { getCached, setCached } from "../lib/queryCache";
 
 const getSubSeriesImage = (name: string) => {
   if (!name) return require("../assets/images/wpc/NFC Doors.png");
   const lowerName = name.toLowerCase();
-  if (lowerName.includes("eco"))
-    return require("../assets/images/door/nfc/nfc_eco_rich.png");
+  if (lowerName.includes("eco") || lowerName.includes("legend"))
+    return require("../assets/images/door/nfc/NFC Legend.png");
   if (lowerName.includes("rich"))
-    return require("../assets/images/door/nfc/nfc_eco_rich.png");
+    return require("../assets/images/door/nfc/NFC rich.png");
   return require("../assets/images/wpc/NFC Doors.png");
+};
+
+const SeriesTabCard = ({ series, onPress, isSelected }: { series: any; onPress: () => void; isSelected: boolean }) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const seriesThumbnail = series.thumbnail_url
+    ? { uri: series.thumbnail_url }
+    : getSubSeriesImage(series.name);
+
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.seriesTab, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={[styles.seriesThumbnailContainer, isSelected && styles.seriesThumbnailSelected]}>
+          <Image source={seriesThumbnail} style={styles.seriesThumbnailImage} resizeMode="cover" />
+        </View>
+        <Text style={styles.seriesTabText}>{series.name}</Text>
+      </Animated.View>
+    </Pressable>
+  );
 };
 
 interface NfcDoorScreenProps {
@@ -36,114 +72,97 @@ export const NfcDoorScreen: React.FC<NfcDoorScreenProps> = ({ navigation }) => {
   const [selectedSeries, setSelectedSeries] = useState<string>("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [specificSeriesTabs, setSpecificSeriesTabs] = useState<any[]>([]);
-  const [displayProducts, setDisplayProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
     fetchSeriesTabs();
   }, []);
 
-  React.useEffect(() => {
-    if (selectedSeries) {
-      fetchProducts();
-    }
-  }, [selectedSeries]);
-
   const fetchSeriesTabs = async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from("series")
-      .select("*")
-      .ilike("name", "%NFC%")
-      .order("order_index");
+    const CACHE_KEY = 'nfcDoorSeries';
+    const cached = getCached(CACHE_KEY);
+    if (cached) {
+      setSpecificSeriesTabs(cached);
+      setSelectedSeries(cached[0].name);
+      setIsLoading(false);
+      return;
+    }
 
-    if (data && data.length > 0) {
-      // Find parent if it exists in the data (a series with no parent_id or where it matches a parent name)
-      const parent = data.find(
-        (s) =>
-          !s.parent_id ||
-          s.name.toUpperCase() === "NFC DOORS" ||
-          s.name.toUpperCase() === "NFC DOOR",
-      );
-      if (parent) {
-        const children = data.filter((s) => s.parent_id === parent.id);
-        if (children.length > 0) {
-          setSpecificSeriesTabs(children);
-          setSelectedSeries(children[0].name);
-        } else {
-          setSpecificSeriesTabs(data);
-          setSelectedSeries(data[0].name);
+    setIsLoading(true);
+    try {
+      const { data } = await supabase
+        .from("series")
+        .select("*")
+        .ilike("name", "%NFC%")
+        .order("order_index");
+
+      if (data && data.length > 0) {
+        const parent = data.find(
+          (s) =>
+            !s.parent_id ||
+            s.name.toUpperCase() === "NFC DOORS" ||
+            s.name.toUpperCase() === "NFC DOOR",
+        );
+        if (parent) {
+          const children = data.filter((s) => s.parent_id === parent.id);
+          if (children.length > 0) {
+            setCached(CACHE_KEY, children);
+            setSpecificSeriesTabs(children);
+            setSelectedSeries(children[0].name);
+            setIsLoading(false);
+            return;
+          }
         }
-      } else {
+        setCached(CACHE_KEY, data);
         setSpecificSeriesTabs(data);
         setSelectedSeries(data[0].name);
+        setIsLoading(false);
+        return;
       }
+    } catch (e) {
+      console.log("Error fetching NFC series:", e);
     }
-  };
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series!inner(name)")
-      .eq("series.name", selectedSeries);
-    if (data) setDisplayProducts(data);
+    // Fallback if no sub-series exist in DB
+    const fallbackData = [
+      { id: "nfc-legend", name: "NFC Legend" },
+      { id: "nfc-rich", name: "NFC DOORS - Rich" },
+    ];
+    setSpecificSeriesTabs(fallbackData);
+    setSelectedSeries(fallbackData[0].name);
     setIsLoading(false);
   };
 
-  const handleProductPress = (productId: string) => {
-    navigation.navigate("NfcDoorDetail", { productId });
+  const handleSeriesPress = (seriesName: string) => {
+    const isEcoOrLegend = seriesName.toLowerCase().includes("eco") || seriesName.toLowerCase().includes("legend");
+    const fallbackId = isEcoOrLegend
+      ? "265a86c2-e011-402d-ba57-db979faae955"
+      : "92c1cd07-6e6b-4a19-845b-5ef893d1d499";
+    const cleanSeriesName = isEcoOrLegend ? "NFC Legend" : "NFC DOORS - Rich";
+    navigation.navigate("NfcDoorDetail", { productId: fallbackId, seriesName: cleanSeriesName });
   };
 
   const renderSeriesTab = (series: any) => {
     const isSelected = selectedSeries === series.name;
-    const seriesThumbnail = series.thumbnail_url
-      ? { uri: series.thumbnail_url }
-      : getSubSeriesImage(series.name);
-
-    let tabLabel = series.name
-      .replace(/^NFC DOORS\s+-\s+/i, "")
-      .replace(/^NFC Door\s+/i, "");
-    if (
-      !tabLabel ||
-      tabLabel.toLowerCase() === "nfc door" ||
-      tabLabel.toLowerCase() === "nfc doors"
-    ) {
-      tabLabel = "All";
-    }
+    let displayName = series.name;
+    if (displayName.toLowerCase().includes("eco") || displayName.toLowerCase().includes("legend")) displayName = "NFC Legend";
+    if (displayName.toLowerCase().includes("rich")) displayName = "NFC DOORS - Rich";
 
     return (
-      <TouchableOpacity
+      <SeriesTabCard
         key={series.id || series.name}
-        style={styles.seriesTab}
-        onPress={() => setSelectedSeries(series.name)}
-      >
-        <View
-          style={[
-            styles.seriesThumbnailContainer,
-            isSelected && styles.seriesThumbnailSelected,
-          ]}
-        >
-          <Image
-            source={seriesThumbnail}
-            style={styles.seriesThumbnailImage}
-            resizeMode="contain"
-          />
-        </View>
-        <Text style={styles.seriesTabText}>{tabLabel}</Text>
-      </TouchableOpacity>
+        series={{ ...series, name: displayName }}
+        isSelected={isSelected}
+        onPress={() => handleSeriesPress(displayName)}
+      />
     );
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
-      image={
-        item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
-      }
-      name={item.name}
-      onPress={() => handleProductPress(item.id)}
-      showSkeleton={false}
-    />
+  const renderSkeleton = (key: number) => (
+    <View key={key} style={styles.seriesTab}>
+      <View style={[styles.seriesThumbnailContainer, { backgroundColor: "#e0e0e0", elevation: 0, borderWidth: 0 }]} />
+      <View style={{ width: 120, height: 16, backgroundColor: "#e0e0e0", marginTop: 12, borderRadius: 4 }} />
+    </View>
   );
 
   return (
@@ -192,40 +211,17 @@ export const NfcDoorScreen: React.FC<NfcDoorScreenProps> = ({ navigation }) => {
 
       {/* White Content Card */}
       <View style={styles.contentCard}>
-        <View style={styles.filterContainer}>
-          <Text style={styles.filterLabel}>Series</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.seriesTabsContainer}
-          >
-            {specificSeriesTabs.map((s) => renderSeriesTab(s))}
-          </ScrollView>
-        </View>
-
-        {isLoading ? (
-          <FlatList
-            data={[1, 2, 3, 4, 5, 6]}
-            keyExtractor={(item) => item.toString()}
-            numColumns={COLUMN_COUNT}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
-            )}
-            contentContainerStyle={styles.productList}
-            columnWrapperStyle={styles.row}
-          />
-        ) : (
-          <FlatList
-          data={displayProducts}
-          keyExtractor={(item) => item.id}
-          numColumns={COLUMN_COUNT}
+        <ScrollView
+          style={styles.filterContainer}
           showsVerticalScrollIndicator={false}
-          renderItem={renderProduct}
-          contentContainerStyle={styles.productList}
-          columnWrapperStyle={styles.row}
-        />
-        )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
+          <View style={styles.seriesTabsContainer}>
+            {isLoading
+              ? [1, 2].map(renderSkeleton)
+              : specificSeriesTabs.map((s) => renderSeriesTab(s))}
+          </View>
+        </ScrollView>
       </View>
 
       {/* Glass Menu Overlay */}
@@ -291,7 +287,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -306,29 +302,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     marginBottom: theme.spacing.lg,
   },
-  filterLabel: {
-    fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
-    color: "#000000",
-    marginBottom: theme.spacing.sm,
-  },
   seriesTabsContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     paddingVertical: theme.spacing.xs,
   },
   seriesTab: {
-    marginRight: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     alignItems: "center",
-    width: 86,
+    width: Dimensions.get("window").width - 32,
   },
   seriesThumbnailContainer: {
-    width: 80,
-    height: 85,
-    borderRadius: 12,
+    width: "100%",
+    aspectRatio: 1.5,
+    borderRadius: theme.borderRadius.lg,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
-    backgroundColor: "#111111",
+    backgroundColor: "transparent",
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -336,7 +326,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -344,16 +334,11 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",
   },
-  productList: {
-    paddingHorizontal: theme.spacing.md,
-    paddingBottom: theme.spacing.xxl,
-  },
-  row: {
-    justifyContent: "space-between",
-  },
 });
+
+

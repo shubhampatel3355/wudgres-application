@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,9 +7,9 @@ import {
   ScrollView,
   ImageBackground,
   Image,
-  Modal,
   Animated,
   Dimensions,
+  Share,
 } from "react-native";
 
 const { width } = Dimensions.get("window");
@@ -26,12 +26,6 @@ interface ProductDetailScreenProps {
   route: any;
 }
 
-const frameSpecifications = [
-  { thickness: "32MM", rate: "165.00" },
-  { thickness: "35MM", rate: "196.00" },
-  { thickness: "38MM", rate: "227.00" },
-];
-
 
 export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
@@ -42,21 +36,10 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Customization state
-  const [selectedWidth, setSelectedWidth] = useState<string>("36");
-  const [selectedHeight, setSelectedHeight] = useState<string>("84");
-  const [selectedThickness, setSelectedThickness] = useState<string>("32");
-  const [modalConfig, setModalConfig] = useState<{
-    label: string;
-    value: string;
-    options: string[];
-    onSelect: (val: string) => void;
-  } | null>(null);
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const slideAnim = React.useRef(new Animated.Value(50)).current;
-  const fadeAnim = React.useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -76,6 +59,35 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   const fetchProduct = async () => {
     setLoading(true);
     if (productId === "flush-door-static") {
+      let fetchedImageUrl = null;
+
+      try {
+        // Try to get image from categories table first
+        const { data: catData, error: catError } = await supabase
+          .from("categories")
+          .select("image_url")
+          .ilike("name", "%Flush%")
+          .maybeSingle();
+
+        if (catData?.image_url) {
+          fetchedImageUrl = catData.image_url;
+        } else {
+          // Fallback to products table in the Flush Doors series
+          const { data: prodData, error: prodError } = await supabase
+            .from("products")
+            .select("image_url, series!inner(name)")
+            .eq("series.name", "Flush Doors")
+            .limit(1)
+            .maybeSingle();
+          
+          if (prodData?.image_url) {
+            fetchedImageUrl = prodData.image_url;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch flush door image dynamically:", err);
+      }
+
       setProduct({
         id: "flush-door-static",
         slug: "Flush Doors",
@@ -86,7 +98,7 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
         dimensions:
           "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
         rate: "295.00, 320.00, 395.00, 420.00",
-        image_url: null,
+        image_url: fetchedImageUrl,
       });
     } else {
       const { data } = await supabase
@@ -280,28 +292,39 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
           <View
             style={{ alignItems: "center", width: "100%", paddingVertical: 20 }}
           >
-            <Image
-              source={require("../assets/images/products/engg1.webp")}
-              style={{
-                width: width - 40,
-                height: 200,
-                resizeMode: "contain",
-                marginBottom: 10,
-              }}
-            />
-            <Image
-              source={require("../assets/images/products/engg2.webp")}
-              style={{
-                width: width - 40,
-                height: 100,
-                resizeMode: "contain",
-                marginBottom: 10,
-              }}
-            />
+            {product?.image_url ? (
+              <Image
+                source={{ uri: product.image_url }}
+                style={{
+                  width: width - 40,
+                  height: 350,
+                  resizeMode: "contain",
+                  marginBottom: 10,
+                }}
+              />
+            ) : null}
           </View>
           <TouchableOpacity style={styles.favoriteButton}>
             <Ionicons name="heart-outline" size={24} color="#000" />
           </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={styles.shareButton}
+            onPress={async () => {
+              try {
+                const pName = product?.slug || product?.name || "Flush Door";
+                const pImg = product?.image_url ? `\n🖼️ Product Image:\n${product.image_url}\n` : "";
+                await Share.share({
+                  title: `${pName} - WudGres`,
+                  message: `🌟 Discover WudGres Premium Architectural Products 🌟\n\nI found this stunning design on the WudGres app and thought you'd love it!\n\n🪵 Product: ${pName}\n✨ Category: Flush Doors Collection\n${pImg}\nExplore premium doors, window shutters, and wood frames crafted for modern interiors.\n\n📲 View product & download app:\nhttps://wudgres.com`,
+                  url: product?.image_url || "https://wudgres.com",
+                });
+              } catch (error) {
+                console.log("Error sharing:", error);
+              }
+            }}
+          >
+            <Ionicons name="share-social-outline" size={24} color="#000" />
+          </TouchableOpacity> */}
         </Animated.View>
 
         {/* Product Information */}
@@ -343,34 +366,42 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
                   RATE / SQFT
                 </Text>
               </View>
-              {frameSpecifications.map((item, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.tableRow,
-                    index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd,
-                    {
-                      alignItems: "center",
-                      borderBottomWidth:
-                        index === frameSpecifications.length - 1 ? 0 : 1,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[styles.tableCell, { flex: 1, textAlign: "center" }]}
-                  >
-                    {item.thickness}
-                  </Text>
-                  <Text
+              {framePricing.length > 0 ? (
+                framePricing.map((item: any, index: number) => (
+                  <View
+                    key={item.id}
                     style={[
-                      styles.tableCell,
-                      { flex: 1, textAlign: "center", borderRightWidth: 0 },
+                      styles.tableRow,
+                      index % 2 === 0 ? styles.tableRowEven : styles.tableRowOdd,
+                      {
+                        alignItems: "center",
+                        borderBottomWidth:
+                          index === framePricing.length - 1 ? 0 : 1,
+                      },
                     ]}
                   >
-                    {item.rate}
+                    <Text
+                      style={[styles.tableCell, { flex: 1, textAlign: "center" }]}
+                    >
+                      {item.description}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tableCell,
+                        { flex: 1, textAlign: "center", borderRightWidth: 0 },
+                      ]}
+                    >
+                      {item.rate}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <View style={[styles.tableRow, styles.tableRowEven, { alignItems: "center", borderBottomWidth: 0 }]}>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: "center", borderRightWidth: 0 }]}>
+                    No pricing available
                   </Text>
                 </View>
-              ))}
+              )}
             </View>
 
             {/* Available Sizes Table */}
@@ -390,7 +421,7 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
                     styles.tableCell,
                     {
                       flex: 1,
-                      fontFamily: "Unbounded_700Bold",
+                      fontFamily: "Gilroy-Regular",
                       textAlign: "center",
                     },
                   ]}
@@ -418,7 +449,7 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
                     styles.tableCell,
                     {
                       flex: 1,
-                      fontFamily: "Unbounded_700Bold",
+                      fontFamily: "Gilroy-Regular",
                       textAlign: "center",
                     },
                   ]}
@@ -447,105 +478,6 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
           navigation.navigate("HomeStack", { screen });
         }}
       />
-
-      {/* Glassmorphism Popup Modal for Dropdown */}
-      <Modal
-        visible={!!modalConfig}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setModalConfig(null)}
-      >
-        <BlurView
-          intensity={80}
-          tint="dark"
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <TouchableOpacity
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-            activeOpacity={1}
-            onPress={() => setModalConfig(null)}
-          />
-
-          <View
-            style={{
-              width: "80%",
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              borderRadius: 16,
-              overflow: "hidden",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.25,
-              shadowRadius: 20,
-              elevation: 10,
-            }}
-          >
-            <View
-              style={{
-                padding: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: "#EEEEEE",
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ fontSize: 18, fontFamily: "Unbounded_700Bold" }}>
-                Select{" "}
-                {modalConfig?.label.replace(" (In)", "").replace(" (mm)", "")}
-              </Text>
-              <TouchableOpacity onPress={() => setModalConfig(null)}>
-                <Ionicons name="close-circle-outline" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ maxHeight: 300 }}>
-              {modalConfig?.options.map((opt, i) => (
-                <TouchableOpacity
-                  key={opt}
-                  style={{
-                    paddingVertical: 16,
-                    paddingHorizontal: 20,
-                    borderBottomWidth:
-                      i === modalConfig.options.length - 1 ? 0 : 1,
-                    borderBottomColor: "#EEEEEE",
-                    backgroundColor:
-                      modalConfig.value === opt ? "#F0F0F0" : "transparent",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                  onPress={() => {
-                    modalConfig.onSelect(opt);
-                    setModalConfig(null);
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontFamily:
-                        modalConfig.value === opt
-                          ? "Unbounded_700Bold"
-                          : "Unbounded_400Regular",
-                      color: "#000",
-                    }}
-                  >
-                    {opt}
-                  </Text>
-                  {modalConfig.value === opt && (
-                    <Ionicons name="checkmark" size={20} color="#000" />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </BlurView>
-      </Modal>
     </View>
   );
 };
@@ -598,12 +530,17 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
   },
+  shareButton: {
+    position: "absolute",
+    top: 56,
+    right: 16,
+  },
   infoSection: {
     padding: theme.spacing.md,
   },
   productTitle: {
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     marginBottom: 8,
   },
@@ -613,12 +550,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   infoValue: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
   },
   customizationCard: {
@@ -630,7 +567,7 @@ const styles = StyleSheet.create({
   },
   customizeTitle: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     color: "#666666",
     padding: 16,
     paddingBottom: 12,
@@ -641,7 +578,7 @@ const styles = StyleSheet.create({
   },
   disclaimerTitle: {
     fontSize: 16,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     // marginBottom: 8,
     paddingTop: 10,
@@ -649,7 +586,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 16,
   },
@@ -677,14 +614,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 4,
     fontSize: 9,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
     borderRightWidth: 1,
     borderRightColor: "#EEEEEE",
     justifyContent: "center",
   },
   tableHeaderText: {
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   dimensionsRow: {
@@ -700,7 +637,7 @@ const styles = StyleSheet.create({
   },
   dropdownLabel: {
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 4,
   },
@@ -717,7 +654,7 @@ const styles = StyleSheet.create({
   dropdownValue: {
     fontSize: 14,
     color: "#000000",
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
   },
   estimateBanner: {
     backgroundColor: "#333333",
@@ -731,7 +668,7 @@ const styles = StyleSheet.create({
   estimateDetailText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     marginBottom: 4,
   },
   estimatePriceBox: {
@@ -741,12 +678,12 @@ const styles = StyleSheet.create({
   estimateSubtitle: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     marginBottom: 2,
   },
   estimatePrice: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
   },
 });

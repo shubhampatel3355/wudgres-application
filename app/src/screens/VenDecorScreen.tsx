@@ -8,6 +8,9 @@ import {
   ScrollView,
   ImageBackground,
   Image,
+  Dimensions,
+  Animated,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,22 +18,58 @@ import { ProductCard, GlassMenu, BurgerMenu } from "../components";
 import { theme } from "../theme";
 import { backgroundImages } from "../data/mockData";
 import { supabase } from "../lib/supabase";
+import { getCached, setCached } from "../lib/queryCache";
 
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
   switch (name) {
     case "Ven Decor Legend":
-      return require("../assets/images/door/ven/Ven Decor Legend.jpeg");
+      return require("../assets/images/door/ven/Ven Decor Legend.png");
     case "Ven Decor Lavish":
-      return require("../assets/images/door/ven/ven lavish.jpeg");
+      return require("../assets/images/door/ven/ven lavish.png");
     case "Ven Decor Elite":
-      return require("../assets/images/door/ven/ven elite.jpeg");
+      return require("../assets/images/door/ven/ven elite.png");
     case "Ven Decor Rich":
-      return require("../assets/images/door/ven/ven rich.jpeg");
+      return require("../assets/images/door/ven/ven rich.png");
     default:
       return backgroundImages.hero;
   }
+};
+
+const SeriesTabCard = ({ series, onPress, isSelected }: { series: any, onPress: () => void, isSelected: boolean }) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const seriesThumbnail = series.thumbnail_url
+    ? { uri: series.thumbnail_url }
+    : getSubSeriesImage(series.name);
+
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.seriesTab, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={[styles.seriesThumbnailContainer, isSelected && styles.seriesThumbnailSelected]}>
+          <Image source={seriesThumbnail} style={styles.seriesThumbnailImage} resizeMode="cover" />
+        </View>
+        <Text style={styles.seriesTabText}>{series.name}</Text>
+      </Animated.View>
+    </Pressable>
+  );
 };
 
 interface VenDecorScreenProps {
@@ -43,91 +82,78 @@ export const VenDecorScreen: React.FC<VenDecorScreenProps> = ({
   const [selectedSeries, setSelectedSeries] = useState<string>("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [specificSeriesTabs, setSpecificSeriesTabs] = useState<any[]>([]);
-  const [displayProducts, setDisplayProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   React.useEffect(() => {
     fetchSeriesTabs();
   }, []);
 
-  React.useEffect(() => {
-    if (selectedSeries) {
-      fetchProducts();
-    }
-  }, [selectedSeries]);
-
   const fetchSeriesTabs = async () => {
+    const CACHE_KEY = 'venDecorSeries';
+    const cached = getCached(CACHE_KEY);
+    if (cached) {
+      setSpecificSeriesTabs(cached);
+      setSelectedSeries(cached[0].name);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
-    const { data: parent } = await supabase
-      .from("series")
-      .select("id")
-      .eq("name", "Ven Decor")
-      .single();
-    if (parent) {
+    try {
+      // Single query: fetch all series whose name starts with 'Ven Decor '
       const { data } = await supabase
         .from("series")
         .select("*")
-        .eq("parent_id", parent.id)
+        .ilike("name", "Ven Decor %")
         .order("order_index");
+
       if (data && data.length > 0) {
+        setCached(CACHE_KEY, data);
         setSpecificSeriesTabs(data);
         setSelectedSeries(data[0].name);
+        setIsLoading(false);
+        return;
       }
+    } catch (e) {
+      console.log("Error fetching series, using fallback:", e);
     }
-  };
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series!inner(name)")
-      .eq("series.name", selectedSeries);
-    if (data) setDisplayProducts(data);
+    // Fallback if no sub-series exist in DB
+    const fallbackData = [
+      { id: "ven-legend", name: "Ven Decor Legend" },
+      { id: "ven-lavish", name: "Ven Decor Lavish" },
+      { id: "ven-elite", name: "Ven Decor Elite" },
+      { id: "ven-rich", name: "Ven Decor Rich" },
+    ];
+    setSpecificSeriesTabs(fallbackData);
+    setSelectedSeries(fallbackData[0].name);
     setIsLoading(false);
   };
 
-  const handleProductPress = (productId: string) => {
-    navigation.navigate("ProductDetail", { productId });
+  const handleSeriesPress = (seriesName: string) => {
+    navigation.navigate("ProductSeries", { seriesName });
   };
 
   const renderSeriesTab = (series: any) => {
     const isSelected = selectedSeries === series.name;
-    const seriesThumbnail = series.thumbnail_url
-      ? { uri: series.thumbnail_url }
-      : getSubSeriesImage(series.name);
     return (
-      <TouchableOpacity
+      <SeriesTabCard
         key={series.id}
-        style={styles.seriesTab}
-        onPress={() => setSelectedSeries(series.name)}
-      >
-        <View
-          style={[
-            styles.seriesThumbnailContainer,
-            isSelected && styles.seriesThumbnailSelected,
-          ]}
-        >
-          <Image
-            source={seriesThumbnail}
-            style={styles.seriesThumbnailImage}
-            resizeMode="contain"
-          />
-        </View>
-        <Text style={styles.seriesTabText}>{series.name}</Text>
-      </TouchableOpacity>
+        series={series}
+        isSelected={isSelected}
+        onPress={() => handleSeriesPress(series.name)}
+      />
     );
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
-      image={
-        item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
-      }
-      name={item.name}
-      onPress={() => handleProductPress(item.id)}
-      showSkeleton={false}
-    />
+  const renderSkeleton = (key: number) => (
+    <View key={key} style={styles.seriesTab}>
+      <View style={[styles.seriesThumbnailContainer, { backgroundColor: '#e0e0e0', elevation: 0, borderWidth: 0 }]} />
+      <View style={{ width: 120, height: 16, backgroundColor: '#e0e0e0', marginTop: 12, borderRadius: 4 }} />
+    </View>
   );
+
+
 
   return (
     <View style={styles.container}>
@@ -176,40 +202,17 @@ export const VenDecorScreen: React.FC<VenDecorScreenProps> = ({
       {/* White Content Card */}
       <View style={styles.contentCard}>
         {/* Series Filter */}
-        <View style={styles.filterContainer}>
-          <Text style={styles.filterLabel}>Series</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.seriesTabsContainer}
-          >
-            {specificSeriesTabs.map((s) => renderSeriesTab(s))}
-          </ScrollView>
-        </View>
-
-        {isLoading ? (
-          <FlatList
-            data={[1, 2, 3, 4, 5, 6]}
-            keyExtractor={(item) => item.toString()}
-            numColumns={COLUMN_COUNT}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
-            )}
-            contentContainerStyle={styles.productList}
-            columnWrapperStyle={styles.row}
-          />
-        ) : (
-          <FlatList
-          data={displayProducts}
-          keyExtractor={(item) => item.id}
-          numColumns={COLUMN_COUNT}
+        <ScrollView
+          style={styles.filterContainer}
           showsVerticalScrollIndicator={false}
-          renderItem={renderProduct}
-          contentContainerStyle={styles.productList}
-          columnWrapperStyle={styles.row}
-        />
-        )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
+          <View style={styles.seriesTabsContainer}>
+            {isLoading 
+              ? [1, 2, 3].map(renderSkeleton)
+              : specificSeriesTabs.map((s) => renderSeriesTab(s))}
+          </View>
+        </ScrollView>
       </View>
 
       {/* Glass Menu Overlay */}
@@ -275,7 +278,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -292,27 +295,27 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginBottom: theme.spacing.sm,
   },
   seriesTabsContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     paddingVertical: theme.spacing.xs,
   },
   seriesTab: {
-    marginRight: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     alignItems: "center",
-    width: 86,
+    width: Dimensions.get("window").width - 32,
   },
   seriesThumbnailContainer: {
-    width: 80,
-    height: 85,
-    borderRadius: 12,
+    width: "100%",
+    aspectRatio: 1.5,
+    borderRadius: theme.borderRadius.lg,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
-    backgroundColor: "#111111",
+    backgroundColor: "transparent",
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -320,7 +323,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -328,7 +331,7 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",

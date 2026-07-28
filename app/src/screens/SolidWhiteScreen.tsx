@@ -8,6 +8,9 @@ import {
   ScrollView,
   ImageBackground,
   Image,
+  Dimensions,
+  Animated,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,10 +26,45 @@ const getSubSeriesImage = (name: string) => {
     return require("../assets/images/door/door-image/Solid White.png");
   const lowerName = name.toLowerCase();
   if (lowerName.includes("eco"))
-    return require("../assets/images/door/solid-white/sloid-img/solid white eco.jpeg");
+    return require("../assets/images/door/solid-white/sloid-img/solid white eco.png");
   if (lowerName.includes("rich"))
-    return require("../assets/images/door/solid-white/sloid-img/solid white rich.jpeg");
+    return require("../assets/images/door/solid-white/sloid-img/solid white rich.png");
   return require("../assets/images/door/door-image/Solid White.png");
+};
+
+const SeriesTabCard = ({ series, onPress, isSelected }: { series: any, onPress: () => void, isSelected: boolean }) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const seriesThumbnail = series.thumbnail_url
+    ? { uri: series.thumbnail_url }
+    : getSubSeriesImage(series.name);
+
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.seriesTab, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={[styles.seriesThumbnailContainer, isSelected && styles.seriesThumbnailSelected]}>
+          <Image source={seriesThumbnail} style={styles.seriesThumbnailImage} resizeMode="cover" />
+        </View>
+        <Text style={styles.seriesTabText}>{series.name}</Text>
+      </Animated.View>
+    </Pressable>
+  );
 };
 
 interface SolidWhiteScreenProps {
@@ -46,12 +84,6 @@ export const SolidWhiteScreen: React.FC<SolidWhiteScreenProps> = ({
     fetchSeriesTabs();
   }, []);
 
-  React.useEffect(() => {
-    if (selectedSeries) {
-      fetchProducts();
-    }
-  }, [selectedSeries]);
-
   const fetchSeriesTabs = async () => {
     setIsLoading(true);
     const { data: parent } = await supabase
@@ -59,76 +91,64 @@ export const SolidWhiteScreen: React.FC<SolidWhiteScreenProps> = ({
       .select("id")
       .eq("name", "Solid White")
       .single();
-    if (parent) {
-      const { data } = await supabase
+    try {
+      const { data: parent } = await supabase
         .from("series")
-        .select("*")
-        .eq("parent_id", parent.id)
-        .order("order_index");
-      if (data && data.length > 0) {
-        setSpecificSeriesTabs(data);
-        setSelectedSeries(data[0].name);
-      } else {
-        // If no specific sub-series, just fetch all Solid White products
-        setSpecificSeriesTabs([{ id: parent.id, name: "All" }]);
-        setSelectedSeries("All");
+        .select("id")
+        .eq("name", "Solid White")
+        .single();
+      if (parent) {
+        const { data } = await supabase
+          .from("series")
+          .select("*")
+          .eq("parent_id", parent.id)
+          .order("order_index");
+        if (data && data.length > 0) {
+          setSpecificSeriesTabs(data);
+          setSelectedSeries(data[0].name);
+          setIsLoading(false);
+          return;
+        }
       }
+    } catch (e) {
+      console.log("Error fetching series, using fallback:", e);
     }
+    
+    // Fallback if no specific sub-series
+    setSpecificSeriesTabs([{ id: 'fallback', name: "All" }]);
+    setSelectedSeries("All");
+    setIsLoading(false);
   };
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    if (selectedSeries === "All") {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series!inner(name)")
-        .eq("series.name", "Solid White");
-      if (data) setDisplayProducts(data);
-    setIsLoading(false);
-    } else {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series!inner(name)")
-        .eq("series.name", selectedSeries);
-      if (data) setDisplayProducts(data);
-    setIsLoading(false);
-    }
+  const handleSeriesPress = (seriesName: string) => {
+    navigation.navigate("ProductSeries", { seriesName });
   };
 
-  const handleProductPress = (productId: string) => {
-    navigation.navigate("ProductDetail", { productId });
+  const handleProductPress = (id: string) => {
+    navigation.navigate("ProductDetail", { productId: id });
   };
 
   const renderSeriesTab = (series: any) => {
     const isSelected = selectedSeries === series.name;
-    const seriesThumbnail = series.thumbnail_url
-      ? { uri: series.thumbnail_url }
-      : getSubSeriesImage(series.name);
     return (
-      <TouchableOpacity
+      <SeriesTabCard
         key={series.id}
-        style={styles.seriesTab}
-        onPress={() => setSelectedSeries(series.name)}
-      >
-        <View
-          style={[
-            styles.seriesThumbnailContainer,
-            isSelected && styles.seriesThumbnailSelected,
-          ]}
-        >
-          <Image
-            source={seriesThumbnail}
-            style={styles.seriesThumbnailImage}
-            resizeMode="contain"
-          />
-        </View>
-        <Text style={styles.seriesTabText}>{series.name}</Text>
-      </TouchableOpacity>
+        series={series}
+        isSelected={isSelected}
+        onPress={() => handleSeriesPress(series.name)}
+      />
     );
   };
 
+  const renderSkeleton = (key: number) => (
+    <View key={key} style={styles.seriesTab}>
+      <View style={[styles.seriesThumbnailContainer, { backgroundColor: '#e0e0e0', elevation: 0, borderWidth: 0 }]} />
+      <View style={{ width: 120, height: 16, backgroundColor: '#e0e0e0', marginTop: 12, borderRadius: 4 }} />
+    </View>
+  );
+
   const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
+    <ProductCard textColor="#333333"
       image={
         item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
       }
@@ -187,41 +207,18 @@ export const SolidWhiteScreen: React.FC<SolidWhiteScreenProps> = ({
         {/* Series Filter */}
         {specificSeriesTabs.length > 0 &&
         specificSeriesTabs[0].name !== "All" ? (
-          <View style={styles.filterContainer}>
-            <Text style={styles.filterLabel}>Series</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.seriesTabsContainer}
-            >
-              {specificSeriesTabs.map((s) => renderSeriesTab(s))}
-            </ScrollView>
-          </View>
-        ) : null}
-
-        {isLoading ? (
-          <FlatList
-            data={[1, 2, 3, 4, 5, 6]}
-            keyExtractor={(item) => item.toString()}
-            numColumns={COLUMN_COUNT}
+          <ScrollView 
+            style={styles.filterContainer}
             showsVerticalScrollIndicator={false}
-            renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
-            )}
-            contentContainerStyle={styles.productList}
-            columnWrapperStyle={styles.row}
-          />
-        ) : (
-          <FlatList
-          data={displayProducts}
-          keyExtractor={(item) => item.id}
-          numColumns={COLUMN_COUNT}
-          showsVerticalScrollIndicator={false}
-          renderItem={renderProduct}
-          contentContainerStyle={styles.productList}
-          columnWrapperStyle={styles.row}
-        />
-        )}
+            contentContainerStyle={{ paddingBottom: 100 }}
+          >
+            <View style={styles.seriesTabsContainer}>
+              {isLoading 
+                ? [1, 2, 3].map(renderSkeleton)
+                : specificSeriesTabs.map((s) => renderSeriesTab(s))}
+            </View>
+          </ScrollView>
+        ) : null}
       </View>
 
       {/* Glass Menu Overlay */}
@@ -287,7 +284,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -304,27 +301,27 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginBottom: theme.spacing.sm,
   },
   seriesTabsContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     paddingVertical: theme.spacing.xs,
   },
   seriesTab: {
-    marginRight: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     alignItems: "center",
-    width: 86,
+    width: Dimensions.get("window").width - 32,
   },
   seriesThumbnailContainer: {
-    width: 80,
-    height: 85,
-    borderRadius: 12,
+    width: "100%",
+    aspectRatio: 1.5,
+    borderRadius: theme.borderRadius.lg,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
-    backgroundColor: "#111111",
+    backgroundColor: "transparent",
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -332,7 +329,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -340,7 +337,7 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",
@@ -353,3 +350,4 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
+

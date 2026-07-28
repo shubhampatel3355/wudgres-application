@@ -67,14 +67,14 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(212, 175, 55, 0.2)', // border-color
   },
   title: {
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Bold',
     fontSize: 20,
     color: '#F0EBE1', // text-primary
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontFamily: 'Unbounded_400Regular',
+    fontFamily: 'Gilroy-Bold',
     fontSize: 14,
     color: '#8F8877', // text-muted
     textAlign: 'center',
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    fontFamily: 'Unbounded_600SemiBold',
+    fontFamily: 'Gilroy-Regular',
     fontSize: 14,
     color: '#000000',
   }

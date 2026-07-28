@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 16,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#ffffff",
     letterSpacing: 0.5,
   },
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   },
   welcomeText: {
     fontSize: 24,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     textAlign: "center",
     marginBottom: 25,
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     height: 50,
     color: "#000000",
     fontSize: 15,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
   },
   eyeIcon: {
     padding: 5,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: "#ffffff",
     fontSize: 16,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
   },
   divider: {
     height: 1,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   newUserText: {
     color: "#000000",
     fontSize: 14,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
     marginRight: 15,
   },
   registerButton: {
@@ -303,6 +303,6 @@ const styles = StyleSheet.create({
   registerButtonText: {
     color: "#ffffff",
     fontSize: 14,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
   },
 });

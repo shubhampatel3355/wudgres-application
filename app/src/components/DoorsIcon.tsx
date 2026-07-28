@@ -7,9 +7,10 @@ interface DoorsIconProps {
 }
 
 export const DoorsIcon: React.FC<DoorsIconProps> = ({ size = 24, color = '#FFFFFF' }) => {
-    const doorWidth = size * 0.22;
+    const doorWidth = size * 0.24;
     const doorHeight = size * 0.75;
-    const spacing = size * 0.08;
+    const spacing = size * 0.06;
+    const bWidth = Math.max(1.5, size * 0.08);
 
     return (
         <View style={[styles.container, { width: size, height: size }]}>
@@ -20,8 +21,10 @@ export const DoorsIcon: React.FC<DoorsIconProps> = ({ size = 24, color = '#FFFFF
                     {
                         width: doorWidth,
                         height: doorHeight,
-                        backgroundColor: color,
-                        transform: [{ skewY: '-5deg' }],
+                        borderColor: color,
+                        borderWidth: bWidth,
+                        backgroundColor: 'transparent',
+                        transform: [{ skewY: '-8deg' }],
                     },
                 ]}
             />
@@ -32,7 +35,9 @@ export const DoorsIcon: React.FC<DoorsIconProps> = ({ size = 24, color = '#FFFFF
                     {
                         width: doorWidth,
                         height: doorHeight,
-                        backgroundColor: color,
+                        borderColor: color,
+                        borderWidth: bWidth,
+                        backgroundColor: 'transparent',
                         marginHorizontal: spacing,
                     },
                 ]}
@@ -44,8 +49,10 @@ export const DoorsIcon: React.FC<DoorsIconProps> = ({ size = 24, color = '#FFFFF
                     {
                         width: doorWidth,
                         height: doorHeight,
-                        backgroundColor: color,
-                        transform: [{ skewY: '5deg' }],
+                        borderColor: color,
+                        borderWidth: bWidth,
+                        backgroundColor: 'transparent',
+                        transform: [{ skewY: '8deg' }],
                     },
                 ]}
             />

@@ -10,6 +10,7 @@ import {
   ImageBackground,
   Dimensions,
   Animated,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,53 +40,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchUser = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .single();
+        if (data?.name) {
+          setUserName(data.name.split(' ')[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching user", err);
+    }
+  };
+
+  const fetchHeroContent = async () => {
+    try {
+      const { data } = await supabase
+        .from('app_hero_content')
+        .select('*')
+        .limit(1)
+        .single();
+      if (data) {
+        setHeroContent(data);
+      }
+    } catch (err) {
+      console.log('Error fetching hero content', err);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([fetchUser(), fetchHeroContent()]);
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', user.id)
-            .single();
-          if (data?.name) {
-            setUserName(data.name.split(' ')[0]); // Just use first name
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching user", err);
-      }
-    };
 
-    const fetchHeroContent = async () => {
-      try {
-        const { data } = await supabase
-          .from('app_hero_content')
-          .select('*')
-          .limit(1)
-          .single();
-        if (data) {
-          setHeroContent(data);
-        }
-      } catch (err) {
-        console.log('Error fetching hero content', err);
-      }
-    };
-
-    fetchUser();
-    fetchHeroContent();
+    // Run both fetches in parallel
+    Promise.all([fetchUser(), fetchHeroContent()]);
 
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 600,
+        duration: 300,
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 600,
+        duration: 300,
         useNativeDriver: true,
       }),
     ]).start();
@@ -124,7 +133,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       navigation.navigate("VenDecor");
     } else if (lowerName.includes("lamorous")) {
       navigation.navigate("Lamorous");
-    } else if (lowerName.includes("timbor")) {
+    } else if (lowerName.includes("timbor") || lowerName.includes("legacy")) {
       navigation.navigate("Timbor");
     } else if (lowerName.includes("lamina")) {
       navigation.navigate("Lamina");
@@ -165,7 +174,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={{ flexGrow: 1, backgroundColor: theme.colors.background }}
+      showsVerticalScrollIndicator={false}
+      bounces={true}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />
+      }
+    >
       {/* Header with Wood Texture Background */}
       <ImageBackground
         source={backgroundImages.woodTexture}
@@ -226,13 +243,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           { opacity: fadeAnim, transform: [{ translateY }] },
         ]}
       >
-        <ScrollView
-          style={styles.scrollView}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-          scrollEventThrottle={4}
-          decelerationRate="normal"
-        >
+        <View style={styles.scrollView}>
           {/* video Card */}
           {/* Hero Content */}
           <View style={styles.videoContainer}>
@@ -269,7 +280,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </View>
             ) : (
               <Video
-                source={heroContent?.video_url ? { uri: heroContent.video_url } : require("../assets/images/video/video.mp4")}
+                source={heroContent?.video_url ? { uri: heroContent.video_url } : require("../assets/images/video/loader.mp4")}
                 style={styles.video}
                 resizeMode={ResizeMode.COVER}
                 usePoster={true}
@@ -294,25 +305,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <FlatList
-              horizontal
-              data={categories}
-              keyExtractor={(item) => item.id}
-              showsHorizontalScrollIndicator={false}
-              scrollEventThrottle={4}
-              decelerationRate="fast"
-              snapToInterval={135} // card width + margin (120 + 15)
-              snapToAlignment="start"
-              removeClippedSubviews={true}
-              renderItem={({ item }) => (
-                <CategoryCard
-                  image={item.image}
-                  name={item.name}
-                  onPress={() => handleCategoryPress(item.id)}
-                />
-              )}
-              contentContainerStyle={styles.categoriesList}
-            />
+            <View style={[styles.categoriesList, { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }]}>
+              {categories.map((item, index) => {
+                const isFull = categories.length === 1 || (categories.length % 2 !== 0 && index === categories.length - 1);
+                return (
+                  <View key={item.id} style={{ width: isFull ? '100%' : '48%' }}>
+                    <CategoryCard
+                      image={item.image}
+                      name={item.name}
+                      layout={isFull ? 'full' : 'grid'}
+                      onPress={() => handleCategoryPress(item.id)}
+                    />
+                  </View>
+                );
+              })}
+            </View>
           </View>
 
           {/* Browse by Series Section */}
@@ -339,7 +346,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
           {/* Bottom Padding for Tab Bar */}
           <View style={{ height: 100 }} />
-        </ScrollView>
+        </View>
       </Animated.View>
 
       {/* Glass Menu Overlay */}
@@ -359,7 +366,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           }
         }}
       />
-    </View>
+    </ScrollView>
   );
 };
 
@@ -414,7 +421,8 @@ const styles = StyleSheet.create({
 
   greeting: {
     fontSize: 32,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
+    
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.md,
     marginLeft: 0,
@@ -452,7 +460,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: theme.fontSize.lg,
-    fontFamily: "Unbounded_600SemiBold",
+    fontFamily: "Gilroy-Bold",
+    
     color: theme.colors.textDark,
   },
   viewAllButton: {
@@ -464,7 +473,7 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: theme.fontSize.xs,
     color: theme.colors.surface,
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
   },
   categoriesList: {
     paddingVertical: theme.spacing.xs,

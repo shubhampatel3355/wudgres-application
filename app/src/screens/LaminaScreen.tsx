@@ -8,6 +8,9 @@ import {
   ScrollView,
   ImageBackground,
   Image,
+  Dimensions,
+  Animated,
+  Pressable,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,13 +22,50 @@ import { supabase } from "../lib/supabase";
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
-  if (!name) return require("../assets/images/door/lamina/Lamina 2.jpeg");
+  if (!name) return require("../assets/images/door/lamina/Lamina 2.png");
   const lowerName = name.toLowerCase();
   if (lowerName.includes("rich"))
     return require("../assets/images/door/lamina/Lamina.png");
   if (lowerName.includes("eco"))
-    return require("../assets/images/door/lamina/Lamina 2.jpeg");
-  return require("../assets/images/door/lamina/Lamina 2.jpeg");
+    return require("../assets/images/door/lamina/Lamina 2.png");
+  return require("../assets/images/door/lamina/Lamina 2.png");
+};
+
+const SeriesTabCard = ({ series, onPress, isSelected }: { series: any, onPress: () => void, isSelected: boolean }) => {
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const seriesThumbnail = series.thumbnail_url
+    ? { uri: series.thumbnail_url }
+    : getSubSeriesImage(series.name);
+
+  const tabLabel = series.name.replace(/^Lamina\s+/i, "");
+
+  return (
+    <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+      <Animated.View style={[styles.seriesTab, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={[styles.seriesThumbnailContainer, isSelected && styles.seriesThumbnailSelected]}>
+          <Image source={seriesThumbnail} style={styles.seriesThumbnailImage} resizeMode="cover" />
+        </View>
+        <Text style={styles.seriesTabText}>{tabLabel}</Text>
+      </Animated.View>
+    </Pressable>
+  );
 };
 
 interface LaminaScreenProps {
@@ -43,83 +83,75 @@ export const LaminaScreen: React.FC<LaminaScreenProps> = ({ navigation }) => {
     fetchSeriesTabs();
   }, []);
 
-  React.useEffect(() => {
-    if (selectedSeries) {
-      fetchProducts();
-    }
-  }, [selectedSeries]);
-
   const fetchSeriesTabs = async () => {
     setIsLoading(true);
-    const { data: parent } = await supabase
-      .from("series")
-      .select("id")
-      .eq("name", "Lamina")
-      .single();
-    if (parent) {
-      const { data } = await supabase
+    try {
+      const { data: parent } = await supabase
         .from("series")
-        .select("*")
-        .eq("parent_id", parent.id)
-        .order("order_index");
-      if (data && data.length > 0) {
-        setSpecificSeriesTabs(data);
-        setSelectedSeries(data[0].name);
+        .select("id")
+        .eq("name", "Lamina")
+        .single();
+        
+      let subSeriesData = null;
+      if (parent) {
+        const { data } = await supabase
+          .from("series")
+          .select("*")
+          .eq("parent_id", parent.id)
+          .order("order_index");
+        subSeriesData = data;
       }
-    }
-  };
+      
+      if (!subSeriesData || subSeriesData.length === 0) {
+        const { data } = await supabase
+          .from("series")
+          .select("*")
+          .ilike("name", "Lamina %")
+          .order("order_index");
+        subSeriesData = data;
+      }
 
-  const fetchProducts = async () => {
-    setIsLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series!inner(name)")
-      .eq("series.name", selectedSeries);
-    if (data) setDisplayProducts(data);
+      if (subSeriesData && subSeriesData.length > 0) {
+        setSpecificSeriesTabs(subSeriesData);
+        setSelectedSeries(subSeriesData[0].name);
+        setIsLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.log("Error fetching series, using fallback:", e);
+    }
+    
+    // Fallback if no sub-series exist in DB
+    const fallbackData = [
+      { id: "lamina-rich", name: "Lamina Rich" },
+      { id: "lamina-eco", name: "Lamina Eco" },
+    ];
+    setSpecificSeriesTabs(fallbackData);
+    setSelectedSeries(fallbackData[0].name);
     setIsLoading(false);
   };
 
-  const handleProductPress = (productId: string) => {
-    navigation.navigate("ProductDetail", { productId });
+  const handleSeriesPress = (seriesName: string) => {
+    navigation.navigate("ProductSeries", { seriesName });
   };
 
   const renderSeriesTab = (series: any) => {
     const isSelected = selectedSeries === series.name;
-    const seriesThumbnail = series.thumbnail_url
-      ? { uri: series.thumbnail_url }
-      : getSubSeriesImage(series.name);
     return (
-      <TouchableOpacity
+      <SeriesTabCard
         key={series.id}
-        style={styles.seriesTab}
-        onPress={() => setSelectedSeries(series.name)}
-      >
-        <View
-          style={[
-            styles.seriesThumbnailContainer,
-            isSelected && styles.seriesThumbnailSelected,
-          ]}
-        >
-          <Image
-            source={seriesThumbnail}
-            style={styles.seriesThumbnailImage}
-            resizeMode="contain"
-          />
-        </View>
-        <Text style={styles.seriesTabText}>{series.name}</Text>
-      </TouchableOpacity>
+        series={series}
+        isSelected={isSelected}
+        onPress={() => handleSeriesPress(series.name)}
+      />
     );
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
-      image={
-        item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
-      }
-      name={item.name}
-      onPress={() => handleProductPress(item.id)}
-      showSkeleton={false}
-    />
+  const renderSkeleton = (key: number) => (
+    <View key={key} style={styles.seriesTab}>
+      <View style={[styles.seriesThumbnailContainer, { backgroundColor: '#e0e0e0', elevation: 0, borderWidth: 0 }]} />
+      <View style={{ width: 120, height: 16, backgroundColor: '#e0e0e0', marginTop: 12, borderRadius: 4 }} />
+    </View>
   );
 
   return (
@@ -169,40 +201,17 @@ export const LaminaScreen: React.FC<LaminaScreenProps> = ({ navigation }) => {
       {/* White Content Card */}
       <View style={styles.contentCard}>
         {/* Series Filter */}
-        <View style={styles.filterContainer}>
-          <Text style={styles.filterLabel}>Series</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.seriesTabsContainer}
-          >
-            {specificSeriesTabs.map((s) => renderSeriesTab(s))}
-          </ScrollView>
-        </View>
-
-        {isLoading ? (
-          <FlatList
-            data={[1, 2, 3, 4, 5, 6]}
-            keyExtractor={(item) => item.toString()}
-            numColumns={COLUMN_COUNT}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
-            )}
-            contentContainerStyle={styles.productList}
-            columnWrapperStyle={styles.row}
-          />
-        ) : (
-          <FlatList
-          data={displayProducts}
-          keyExtractor={(item) => item.id}
-          numColumns={COLUMN_COUNT}
+        <ScrollView
+          style={styles.filterContainer}
           showsVerticalScrollIndicator={false}
-          renderItem={renderProduct}
-          contentContainerStyle={styles.productList}
-          columnWrapperStyle={styles.row}
-        />
-        )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        >
+          <View style={styles.seriesTabsContainer}>
+            {isLoading 
+              ? [1, 2].map(renderSkeleton)
+              : specificSeriesTabs.map((s) => renderSeriesTab(s))}
+          </View>
+        </ScrollView>
       </View>
 
       {/* Glass Menu Overlay */}
@@ -268,7 +277,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -285,27 +294,27 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginBottom: theme.spacing.sm,
   },
   seriesTabsContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     paddingVertical: theme.spacing.xs,
   },
   seriesTab: {
-    marginRight: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     alignItems: "center",
-    width: 86,
+    width: Dimensions.get("window").width - 32,
   },
   seriesThumbnailContainer: {
-    width: 80,
-    height: 85,
-    borderRadius: 12,
+    width: "100%",
+    aspectRatio: 1.5,
+    borderRadius: theme.borderRadius.lg,
     overflow: "hidden",
     borderWidth: 2,
     borderColor: "transparent",
-    backgroundColor: "#111111",
+    backgroundColor: "transparent",
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -313,7 +322,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -321,7 +330,7 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",

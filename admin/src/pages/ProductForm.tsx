@@ -58,38 +58,96 @@ const ChipSelector = ({ available, selected, onChange }: { available: string, se
   const availableList = available ? available.split(',').map(s => s.trim()).filter(Boolean) : [];
   const selectedList = selected ? selected.split(',').map(s => s.trim()).filter(Boolean) : [];
 
-  const toggle = (opt: string) => {
-    if (selectedList.includes(opt)) {
-      onChange(selectedList.filter(s => s !== opt).join(', '));
-    } else {
+  const addOpt = (opt: string) => {
+    if (!selectedList.includes(opt)) {
       onChange([...selectedList, opt].join(', '));
     }
   };
 
+  const removeOpt = (opt: string) => {
+    onChange(selectedList.filter(s => s !== opt).join(', '));
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault(); // necessary to allow dropping
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    const sourceIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+    if (isNaN(sourceIndex) || sourceIndex === targetIndex) return;
+    
+    const newSelected = [...selectedList];
+    const [moved] = newSelected.splice(sourceIndex, 1);
+    newSelected.splice(targetIndex, 0, moved);
+    
+    onChange(newSelected.join(', '));
+  };
+
+  const unselectedList = availableList.filter(opt => !selectedList.includes(opt));
+
   return (
-    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-      {availableList.map(opt => {
-        const isSelected = selectedList.includes(opt);
-        return (
-          <button 
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+      {/* Selected (Draggable) */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', minHeight: selectedList.length ? 'auto' : '40px', padding: '0.5rem', background: 'rgba(0,0,0,0.15)', border: '1px dashed var(--border-subtle)', borderRadius: '8px' }}>
+        {selectedList.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', alignSelf: 'center', margin: '0 auto' }}>Select options from below...</span>}
+        {selectedList.map((opt, index) => (
+          <div 
             key={opt}
-            type="button" 
-            onClick={() => toggle(opt)}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, index)}
             style={{ 
-              padding: '0.4rem 1rem', 
-              borderRadius: '6px', 
-              border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-color)',
-              background: isSelected ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)',
-              color: isSelected ? '#000' : 'var(--text-primary)',
-              fontWeight: isSelected ? 600 : 400,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
+              padding: '0.3rem 0.6rem 0.3rem 0.8rem', 
+              borderRadius: '24px', 
+              border: '1px solid var(--accent-gold)',
+              background: 'var(--accent-gold)',
+              color: '#000',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'grab',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              userSelect: 'none'
             }}
           >
             {opt}
-          </button>
-        );
-      })}
+            <div onClick={() => removeOpt(opt)} style={{ cursor: 'pointer', padding: '0 4px', fontSize: '1.2rem', lineHeight: 1, opacity: 0.7 }}>&times;</div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Available */}
+      {unselectedList.length > 0 && (
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {unselectedList.map(opt => (
+            <button 
+              key={opt}
+              type="button" 
+              onClick={() => addOpt(opt)}
+              style={{ 
+                padding: '0.35rem 0.8rem', 
+                borderRadius: '24px', 
+                border: '1px solid var(--border-color)',
+                background: 'rgba(255,255,255,0.05)',
+                color: 'var(--text-primary)',
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              + {opt}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -453,8 +511,8 @@ const ProductForm = () => {
                       <label className="form-label">Shades</label>
                       {(() => {
                         const availableShades = Array.from(new Set([
-                          ...(pricingShades ? pricingShades.split(',').map(s => s.trim()) : []),
-                          ...(activeSeries?.allowed_shades ? activeSeries.allowed_shades.split(',').map(s => s.trim()) : [])
+                          ...(pricingShades ? pricingShades.split(',').map((s: string) => s.trim()) : []),
+                          ...(activeSeries?.allowed_shades ? activeSeries.allowed_shades.split(',').map((s: string) => s.trim()) : [])
                         ])).filter(Boolean).join(', ');
                         
                         return availableShades ? (

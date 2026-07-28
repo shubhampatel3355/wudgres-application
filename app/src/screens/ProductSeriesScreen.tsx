@@ -15,6 +15,7 @@ import { ProductCard, GlassMenu, BurgerMenu } from "../components";
 import { theme } from "../theme";
 import { backgroundImages } from "../data/mockData";
 import { supabase } from "../lib/supabase";
+import { getCached, setCached } from "../lib/queryCache";
 
 const COLUMN_COUNT = 2;
 
@@ -45,20 +46,32 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
   }, [selectedSeries, initialSeries]);
 
   const fetchSeriesTabs = async () => {
+    const cacheKey = `seriesTabs:${initialSeries}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      setAllSeries(cached);
+      return;
+    }
     setIsLoading(true);
     const { data } = await supabase
       .from("series")
       .select("*")
       .ilike("name", `${initialSeries}%`)
       .order("order_index");
-    if (data) {
-      setAllSeries(data);
-    } else {
-      setAllSeries([]);
-    }
+    const result = data || [];
+    setCached(cacheKey, result);
+    setAllSeries(result);
   };
 
   const fetchProducts = async () => {
+    const cacheKey = `products:${initialSeries}:${selectedSeries}`;
+    const cached = getCached(cacheKey);
+    if (cached) {
+      setDisplayProducts(cached);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     let query = supabase.from("products").select("*, series!inner(name)");
 
@@ -68,8 +81,10 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
       query = query.ilike("series.name", `${initialSeries}%`);
     }
 
-    const { data } = await query;
-    if (data) setDisplayProducts(data);
+    const { data } = await query.order("name", { ascending: true });
+    const result = data || [];
+    setCached(cacheKey, result);
+    setDisplayProducts(result);
     setIsLoading(false);
   };
 
@@ -106,7 +121,7 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
   };
 
   const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
+    <ProductCard textColor="#333333"
       image={
         item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
       }
@@ -155,7 +170,7 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
             </View>
 
             {/* Title */}
-            <Text style={styles.title}>{initialSeries}</Text>
+            <Text style={styles.title}>{initialSeries.replace(/Timbor/gi, "Legacy Wood")}</Text>
           </View>
         </SafeAreaView>
       </ImageBackground>
@@ -189,7 +204,7 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
             numColumns={COLUMN_COUNT}
             showsVerticalScrollIndicator={false}
             renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
+              <ProductCard textColor="#333333" image={null} name="" index={index} showSkeleton={true} />
             )}
             contentContainerStyle={styles.productList}
             columnWrapperStyle={styles.row}
@@ -270,7 +285,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -287,7 +302,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginBottom: theme.spacing.sm,
   },
@@ -315,7 +330,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -323,7 +338,7 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",
@@ -336,3 +351,4 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
+

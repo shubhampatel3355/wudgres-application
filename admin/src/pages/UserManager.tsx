@@ -20,9 +20,7 @@ const UserManager = () => {
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+
 
   const fetchUsers = async () => {
     try {
@@ -42,6 +40,10 @@ const UserManager = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const toggleAdmin = async (id: string, currentStatus: boolean) => {
     if (!window.confirm(`Are you sure you want to ${currentStatus ? 'remove' : 'grant'} admin privileges for this user?`)) return;

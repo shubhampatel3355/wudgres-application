@@ -9,6 +9,7 @@ import {
   Image,
   Modal,
   Animated,
+  Share,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -156,19 +157,42 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
   const designOptions = useMemo(() => {
     if (!pricingRules || pricingRules.length === 0) return ["Standard Design"];
     
-    // Some series use 'shade' instead of 'finish'
-    const hasShades = pricingRules.some(r => r.shade);
+    const allowedFinishes = product?.finish 
+      ? product.finish.split(',').map((s: string) => s.trim()).filter(Boolean) 
+      : null;
+      
     const options = new Set<string>();
     
     pricingRules.forEach(rule => {
       // Prioritize shade if available, else finish
       const opt = rule.shade || rule.finish;
-      if (opt) options.add(opt);
+      if (opt) {
+        if (allowedFinishes && allowedFinishes.length > 0) {
+          if (allowedFinishes.includes(opt)) {
+            options.add(opt);
+          }
+        } else {
+          options.add(opt);
+        }
+      }
     });
     
     const optsArray = Array.from(options);
+    
+    // Sort options to exactly match the order defined by the admin in allowedFinishes
+    if (allowedFinishes && allowedFinishes.length > 0) {
+      optsArray.sort((a, b) => {
+        const indexA = allowedFinishes.indexOf(a);
+        const indexB = allowedFinishes.indexOf(b);
+        // If an option is somehow not in allowedFinishes, push it to the end
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+    }
+    
     return optsArray.length > 0 ? optsArray : ["Standard Design"];
-  }, [pricingRules]);
+  }, [pricingRules, product]);
 
   React.useEffect(() => {
     if (designOptions.length > 0 && !designOptions.includes(selectedDesign)) {
@@ -223,7 +247,7 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
             fontSize: 10,
             color: "#666666",
             marginBottom: 6,
-            fontFamily: "Unbounded_400Regular",
+            fontFamily: "Gilroy-Regular",
           }}
         >
           {label}
@@ -245,7 +269,7 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
           <Text
             style={{
               fontSize: 14,
-              fontFamily: "Unbounded_600SemiBold",
+              fontFamily: "Gilroy-Regular",
               color: "#000",
             }}
           >
@@ -439,12 +463,31 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
               color={isInWishlist(product.id) ? theme.colors.primary : "#000"} 
             />
           </TouchableOpacity>
+          {/* <TouchableOpacity 
+            style={styles.shareButton}
+            onPress={async () => {
+              try {
+                const pName = product.slug || product.name || "Premium Wood Product";
+                const pSeries = product.series?.name ? product.series.name.replace(/Timbor/gi, "Legacy Wood").trim() : "Doors & Architectural Solutions";
+                const pImg = product.image_url ? `\n🖼️ Product Image:\n${product.image_url}\n` : "";
+                await Share.share({
+                  title: `${pName} - WudGres`,
+                  message: `🌟 Discover WudGres Premium Architectural Products 🌟\n\nI found this stunning design on the WudGres app and thought you'd love it!\n\n🪵 Product: ${pName}\n✨ Category: ${pSeries}\n${pImg}\nExplore premium doors, window shutters, and wood frames crafted for modern interiors.\n\n📲 View product & download app:\nhttps://wudgres.com`,
+                  url: product.image_url || "https://wudgres.com",
+                });
+              } catch (error) {
+                console.log("Error sharing:", error);
+              }
+            }}
+          >
+            <Ionicons name="share-social-outline" size={24} color="#000" />
+          </TouchableOpacity> */}
         </Animated.View>
 
         {/* Product Information */}
         <View style={styles.infoSection}>
           <Text style={styles.productTitle}>
-            {product.slug} - {product.series?.name}
+            {product.slug} - {product.series?.name ? product.series.name.replace(/Timbor/gi, "Legacy Wood").trim() : ""}
           </Text>
           {/* <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Category: </Text>
@@ -473,14 +516,16 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
           {/* Design Options */}
           <View style={styles.optionsContainer}>
-            {designOptions.map((opt) => {
+            {designOptions.map((opt, index) => {
               const isSelected = selectedDesign === opt;
+              const isFull = designOptions.length === 1 || (designOptions.length % 2 !== 0 && index === designOptions.length - 1);
               return (
                 <TouchableOpacity
                   key={opt}
                   style={[
                     styles.optionButton,
                     isSelected && styles.optionButtonActive,
+                    { width: isFull ? '100%' : '48%' }
                   ]}
                   onPress={() => setSelectedDesign(opt)}
                 >
@@ -507,10 +552,10 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
             }}
           >
             {renderDropdown(
-              "Width (In)",
-              selectedWidth,
-              widths,
-              setSelectedWidth,
+              "Thickness (mm)",
+              selectedThickness,
+              thicknesses,
+              setSelectedThickness,
             )}
             {renderDropdown(
               "Height (In)",
@@ -519,10 +564,10 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
               setSelectedHeight,
             )}
             {renderDropdown(
-              "Thickness (mm)",
-              selectedThickness,
-              thicknesses,
-              setSelectedThickness,
+              "Width (In)",
+              selectedWidth,
+              widths,
+              setSelectedWidth,
             )}
           </View>
 
@@ -535,9 +580,6 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
               </Text>
               <Text style={styles.estimateDetailText}>
                 {selectedThickness}mm | {((parseFloat(selectedWidth)||36) * (parseFloat(selectedHeight)||84) / 144).toFixed(2)} SQFT
-              </Text>
-              <Text style={[styles.estimateDetailText, { color: '#aaa', fontSize: 9 }]}>
-                Incl. GST • Freight extra
               </Text>
             </View>
             <View style={styles.estimatePriceBox}>
@@ -604,7 +646,7 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 alignItems: "center",
               }}
             >
-              <Text style={{ fontSize: 18, fontFamily: "Unbounded_700Bold" }}>
+              <Text style={{ fontSize: 18, fontFamily: "Gilroy-Bold" }}>
                 Select{" "}
                 {modalConfig?.label.replace(" (In)", "").replace(" (mm)", "")}
               </Text>
@@ -639,8 +681,8 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
                       fontSize: 16,
                       fontFamily:
                         modalConfig.value === opt
-                          ? "Unbounded_700Bold"
-                          : "Unbounded_400Regular",
+                          ? "Gilroy-Regular"
+                          : "Gilroy-Regular",
                       color: "#000",
                     }}
                   >
@@ -707,12 +749,17 @@ const styles = StyleSheet.create({
     top: 16,
     right: 16,
   },
+  shareButton: {
+    position: "absolute",
+    top: 56,
+    right: 16,
+  },
   infoSection: {
     padding: theme.spacing.md,
   },
   productTitle: {
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: "#000000",
     marginBottom: 8,
   },
@@ -722,12 +769,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
   },
   infoValue: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#333333",
   },
   customizationCard: {
@@ -739,22 +786,26 @@ const styles = StyleSheet.create({
   },
   customizeTitle: {
     fontSize: 14,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     color: "#666666",
     padding: 16,
     paddingBottom: 12,
   },
   optionsContainer: {
     paddingHorizontal: 16,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   optionButton: {
     borderWidth: 1,
     borderColor: "#CCCCCC",
     borderRadius: 4,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
     marginBottom: 12,
-    alignSelf: "flex-start",
+    alignItems: "center",
+    justifyContent: "center",
   },
   optionButtonActive: {
     borderColor: "#000000",
@@ -763,10 +814,10 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 14,
     color: "#000000",
-    fontFamily: "Unbounded_500Medium",
+    fontFamily: "Gilroy-Regular",
   },
   optionTextActive: {
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
   },
   dimensionsRow: {
     flexDirection: "row",
@@ -781,7 +832,7 @@ const styles = StyleSheet.create({
   },
   dropdownLabel: {
     fontSize: 10,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#666666",
     marginBottom: 4,
   },
@@ -798,7 +849,7 @@ const styles = StyleSheet.create({
   dropdownValue: {
     fontSize: 14,
     color: "#000000",
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Regular",
   },
   estimateBanner: {
     backgroundColor: "#333333",
@@ -812,7 +863,7 @@ const styles = StyleSheet.create({
   estimateDetailText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     marginBottom: 4,
   },
   estimatePriceBox: {
@@ -822,12 +873,12 @@ const styles = StyleSheet.create({
   estimateSubtitle: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Bold",
     marginBottom: 2,
   },
   estimatePrice: {
     color: "#FFFFFF",
     fontSize: 22,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
   },
 });

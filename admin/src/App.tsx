@@ -11,6 +11,7 @@ import UserManager from './pages/UserManager';
 import LeadManager from './pages/LeadManager';
 import NotificationCenter from './pages/NotificationCenter';
 import SettingsManager from './pages/SettingsManager';
+import FinishesManager from './pages/FinishesManager';
 import HomeContentManager from './pages/HomeContentManager';
 import footerLogo from './assets/footer_logo.png';
 import logoIcon from './assets/logo.png';
@@ -64,7 +65,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link to="/pricing" className={`nav-item ${location.pathname === '/pricing' ? 'active' : ''}`}>
             <IndianRupee size={20} />
-            <span>Pricing & Finishes</span>
+            <span>Pricing Rules</span>
+          </Link>
+          <Link to="/finishes" className={`nav-item ${location.pathname === '/finishes' ? 'active' : ''}`}>
+            <Settings size={20} />
+            <span>Global Finishes</span>
           </Link>
           <Link to="/dealers" className={`nav-item ${location.pathname === '/dealers' ? 'active' : ''}`}>
             <MapPin size={20} />
@@ -114,6 +119,7 @@ function App() {
           <Route path="/products/edit/:id" element={<ProductForm />} />
           <Route path="/series" element={<SeriesManager />} />
           <Route path="/pricing" element={<PricingManager />} />
+          <Route path="/finishes" element={<FinishesManager />} />
           <Route path="/dealers" element={<DealerManager />} />
           <Route path="/users" element={<UserManager />} />
           <Route path="/leads" element={<LeadManager />} />

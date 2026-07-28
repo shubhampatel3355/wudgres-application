@@ -14,7 +14,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const dimensionRules = [
   {
-    matchSlugs: ['timbor'],
+    matchSlugs: ['timbor', 'legacy-wood'],
     allowed_thicknesses: '32, 38',
     allowed_heights: '78, 81, 84',
     allowed_widths: '33, 36, 38, 42'

@@ -74,7 +74,8 @@ export const TeakVeneerScreen: React.FC<TeakVeneerScreenProps> = ({
     const { data } = await supabase
       .from("products")
       .select("*, series!inner(name)")
-      .eq("series.name", selectedSeries);
+      .eq("series.name", selectedSeries)
+      .order("name", { ascending: true });
     if (data) setDisplayProducts(data);
     setIsLoading(false);
   };
@@ -119,7 +120,7 @@ export const TeakVeneerScreen: React.FC<TeakVeneerScreenProps> = ({
   };
 
   const renderProduct = ({ item }: { item: any }) => (
-    <ProductCard
+    <ProductCard textColor="#333333"
       image={
         item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
       }
@@ -196,7 +197,7 @@ export const TeakVeneerScreen: React.FC<TeakVeneerScreenProps> = ({
             numColumns={COLUMN_COUNT}
             showsVerticalScrollIndicator={false}
             renderItem={({ index }) => (
-              <ProductCard image={null} name="" index={index} showSkeleton={true} />
+              <ProductCard textColor="#333333" image={null} name="" index={index} showSkeleton={true} />
             )}
             contentContainerStyle={styles.productList}
             columnWrapperStyle={styles.row}
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
     color: theme.colors.textPrimary,
     marginTop: 0,
     marginLeft: 0,
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginBottom: theme.spacing.sm,
   },
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   seriesThumbnailSelected: {
-    borderColor: "#C2A46F",
+    borderColor: "transparent",
   },
   seriesThumbnailImage: {
     width: "100%",
@@ -330,7 +331,7 @@ const styles = StyleSheet.create({
   },
   seriesTabText: {
     fontSize: theme.fontSize.sm,
-    fontFamily: "Unbounded_400Regular",
+    fontFamily: "Gilroy-Regular",
     color: "#000000",
     marginTop: 6,
     textAlign: "center",
@@ -343,3 +344,4 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
 });
+

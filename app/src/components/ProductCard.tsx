@@ -21,6 +21,7 @@ interface ProductCardProps {
   onPress?: () => void;
   showSkeleton?: boolean;
   index?: number;
+  textColor?: string;
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({
@@ -29,6 +30,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onPress,
   showSkeleton = false,
   index = 0,
+  textColor = "#FFFFFF",
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
@@ -43,15 +45,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         toValue: 1,
         useNativeDriver: true,
         friction: 8,
-        tension: 50,
-        delay: index * 30, // Faster stagger
+        tension: 80,
+        delay: index * 15, // Fast stagger
       }),
       Animated.spring(translateY, {
         toValue: 0,
         useNativeDriver: true,
         friction: 8,
-        tension: 50,
-        delay: index * 30, // Faster stagger
+        tension: 80,
+        delay: index * 15, // Fast stagger
       }),
     ]).start();
   }, []);
@@ -102,25 +104,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         onPressOut={handlePressOut}
         style={{ flex: 1 }}
       >
-        <Animated.View style={[styles.cardInner, { opacity: opacityAnim }]}>
-          <Image source={image} style={styles.image} resizeMode="contain" />
+        <Animated.View style={{ opacity: opacityAnim, width: "100%" }}>
+          <View style={styles.imageContainer}>
+            <Image source={image} style={styles.image} resizeMode="cover" />
+          </View>
 
-          {showSkeleton ? (
-            <View style={styles.skeletonContainer}>
-              <Skeleton width="100%" height={8} borderRadius={4} style={{ marginBottom: 6 }} color="rgba(200, 200, 200, 0.4)" />
-              <Skeleton width="80%" height={8} borderRadius={4} style={{ marginBottom: 6 }} color="rgba(200, 200, 200, 0.4)" />
-              <Skeleton width="90%" height={8} borderRadius={4} color="rgba(200, 200, 200, 0.4)" />
-            </View>
-          ) : (
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.85)"]}
-              style={styles.gradientOverlay}
-            >
-              <Text style={styles.nameText} numberOfLines={2}>
+          <View style={styles.textContainer}>
+            {showSkeleton ? (
+              <View style={styles.skeletonContainer}>
+                <Skeleton width="100%" height={8} borderRadius={4} style={{ marginBottom: 6 }} color="rgba(200, 200, 200, 0.4)" />
+                <Skeleton width="80%" height={8} borderRadius={4} color="rgba(200, 200, 200, 0.4)" />
+              </View>
+            ) : (
+              <Text style={[styles.nameText, { color: textColor }]} numberOfLines={2}>
                 {name}
               </Text>
-            </LinearGradient>
-          )}
+            )}
+          </View>
         </Animated.View>
       </Pressable>
     </Animated.View>
@@ -130,53 +130,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: CARD_WIDTH,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: theme.spacing.xl,
   },
-  cardInner: {
+  imageContainer: {
     width: "100%",
-    aspectRatio: 3 / 4,
-    backgroundColor: "#EAEAEA",
-    borderRadius: 16,
+    aspectRatio: 0.45, // Taller aspect ratio for doors
+    backgroundColor: "transparent",
+    borderRadius: 0,
     overflow: "hidden",
-    position: "relative",
   },
   image: {
     width: "100%",
     height: "100%",
   },
-  gradientOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-    justifyContent: "flex-end",
-    padding: theme.spacing.sm,
+  textContainer: {
+    width: "100%",
+    paddingTop: theme.spacing.sm,
+    alignItems: "center",
   },
   nameText: {
     color: "#FFFFFF",
     fontSize: theme.fontSize.md,
-    fontFamily: "Unbounded_700Bold",
+    fontFamily: "Gilroy-Bold",
+    textAlign: "center",
     letterSpacing: 0.5,
   },
   skeletonContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#FFFFFF",
-    padding: 8,
-    gap: 6,
-  },
-  skeletonLine: {
-    height: 8,
-    backgroundColor: "#E0E0E0",
-    borderRadius: 4,
+    width: "100%",
+    alignItems: "center",
   },
 });

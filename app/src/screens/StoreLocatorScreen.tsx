@@ -309,6 +309,7 @@ export const StoreLocatorScreen = () => {
   const [showCards, setShowCards] = useState(true);
   const [showAllDealers, setShowAllDealers] = useState(false);
   const [expandedCardIndex, setExpandedCardIndex] = useState<number | null>(null);
+  const [hasLocationPermission, setHasLocationPermission] = useState<boolean | null>(null);
 
   // ── Derived: nearby (≤15 km) vs all ──
   const NEARBY_RADIUS_KM = 15;
@@ -324,26 +325,38 @@ export const StoreLocatorScreen = () => {
   // ── Debounce timer ref ──
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Request location on mount ──
+  // ── Request location on focus ──
   useEffect(() => {
+    // Run on initial mount
     requestLocation();
-  }, []);
+
+    // Run on every subsequent focus
+    const unsubscribe = navigation.addListener('focus', () => {
+      requestLocation();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const requestLocation = async () => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      let { status } = await Location.getForegroundPermissionsAsync();
+      
       if (status !== 'granted') {
-        Alert.alert(
-          'Location Required',
-          'This page needs your location to find nearby dealers. Please enable location access in your settings.',
-          [
-            {
-              text: 'Go Back',
-              onPress: () => navigation.navigate('HomeStack'),
-            },
-          ],
-          { cancelable: false }
-        );
+        const response = await Location.requestForegroundPermissionsAsync();
+        status = response.status;
+      }
+
+      if (status !== 'granted') {
+        setHasLocationPermission(false);
+        setIsLoading(false);
+        return;
+      }
+
+      setHasLocationPermission(true);
+
+      // If we already have the data, don't refetch on every tab focus
+      if (allStores.length > 0 && userCoords) {
         return;
       }
 
@@ -402,17 +415,8 @@ export const StoreLocatorScreen = () => {
         }
       }
     } catch (err) {
-      Alert.alert(
-        'Location Error',
-        'Could not determine your location. Please try again.',
-        [
-          {
-            text: 'Go Back',
-            onPress: () => navigation.navigate('HomeStack'),
-          },
-        ],
-        { cancelable: false }
-      );
+      setHasLocationPermission(false);
+      setIsLoading(false);
     }
   };
 
@@ -718,7 +722,24 @@ export const StoreLocatorScreen = () => {
     <View style={[styles.container, { paddingTop: STATUS_BAR_HEIGHT + 10 }]}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
 
-      {/* ── Search Section (pinned) ── */}
+      {hasLocationPermission === false ? (
+        <View style={styles.permissionContainer}>
+          <Ionicons name="location" size={80} color="#E0DCD8" />
+          <Text style={styles.permissionTitle}>Location Access Required</Text>
+          <Text style={styles.permissionSubtitle}>
+            We need your location to find the nearest dealers and stores for you.
+          </Text>
+          <TouchableOpacity
+            style={styles.permissionButton}
+            onPress={() => Linking.openSettings()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.permissionButtonText}>Enable Location in Settings</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          {/* ── Search Section (pinned) ── */}
       <View style={styles.searchSection}>
         <View style={styles.searchBar}>
           <Ionicons
@@ -803,6 +824,8 @@ export const StoreLocatorScreen = () => {
             />
           )}
         </Animated.View>
+      )}
+        </>
       )}
     </View>
   );
@@ -1092,7 +1115,42 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   viewAllSubtitle: {
-    fontSize: 12,
-    color: '#999',
+    color: '#888',
+    fontSize: 13,
+    fontFamily: 'Gilroy-Regular',
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    marginTop: -50,
+  },
+  permissionTitle: {
+    fontSize: 22,
+    fontFamily: 'Gilroy-Bold',
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  permissionSubtitle: {
+    fontSize: 15,
+    fontFamily: 'Gilroy-Regular',
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 22,
+  },
+  permissionButton: {
+    backgroundColor: theme.colors.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  permissionButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: 'Gilroy-SemiBold',
   },
 });

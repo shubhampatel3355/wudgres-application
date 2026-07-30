@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   ImageBackground,
   Image,
+  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
@@ -21,55 +22,86 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
-  const [emailOrPhone, setEmailOrPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
 
 
-  // Helper to format phone (assuming India +91 if no country code provided)
-  const formatPhone = (p: string) => {
-    return p.startsWith('+') ? p : `+91${p}`;
+  const handlePhoneChange = (text: string) => {
+    // Strip +91 if pasted
+    let cleaned = text.replace(/^\+91/, '');
+    // Remove all non-numeric characters
+    cleaned = cleaned.replace(/[^0-9]/g, '');
+    // Limit to 10 digits
+    if (cleaned.length > 10) {
+      cleaned = cleaned.slice(0, 10);
+    }
+    setPhone(cleaned);
   };
 
-  const handleLogin = async () => {
-    if (!emailOrPhone || !password) {
-      Alert.alert("Error", "Please enter your Email/Phone and Password");
+  const handleSendOtp = async () => {
+    if (loading) return; // Prevent double clicks
+    if (!phone || phone.length !== 10) {
+      Alert.alert("Error", "Please enter a valid 10-digit phone number");
       return;
     }
     
     setLoading(true);
     
-    const isEmail = emailOrPhone.includes('@');
-    let loginEmail = emailOrPhone.trim();
+    // Check if user exists (check both 10-digit and +91 formats in DB just in case)
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("id, phone")
+      .or(`phone.eq.${phone},phone.eq.+91${phone}`)
+      .limit(1)
+      .maybeSingle();
 
-    // If user entered a phone number, look up their email from profiles
-    if (!isEmail) {
-      const cleanPhone = emailOrPhone.trim().replace(/\s+/g, '');
-      const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : (cleanPhone.startsWith('0') ? `+91${cleanPhone.slice(1)}` : `+91${cleanPhone}`);
-      const rawDigits = cleanPhone.replace(/^\+91/, '').replace(/^0/, '');
-      
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("email, phone")
-        .or(`phone.eq.${formattedPhone},phone.eq.${cleanPhone},phone.eq.${rawDigits},phone.eq.+91${rawDigits}`)
-        .limit(1)
-        .maybeSingle();
-
-      if (profileError || !profileData || !profileData.email) {
+    if (!profileData) {
+      Keyboard.dismiss();
+      // Delay slightly to let the keyboard fully close and the layout to stabilize
+      // This prevents the violent layout flickering on Android caused by KeyboardAvoidingView
+      setTimeout(() => {
         setLoading(false);
-        Alert.alert("Login Failed", "No account found with this phone number. Please use your email or check the number.");
-        return;
-      }
-
-      loginEmail = profileData.email;
+        navigation.navigate("Register", { initialPhone: phone });
+      }, 150);
+      return;
     }
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: password,
+
+    // Supabase Auth requires E.164 format for SMS
+    const formattedPhone = `+91${phone}`;
+
+    // User exists, send OTP
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: formattedPhone,
     });
+
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    } else {
+      setOtpSent(true);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (loading) return; // Prevent double clicks
+    if (!otp) {
+      Alert.alert("Error", "Please enter the OTP");
+      return;
+    }
+
+    setLoading(true);
+    const formattedPhone = `+91${phone}`;
+
+    const { error } = await supabase.auth.verifyOtp({
+      phone: formattedPhone,
+      token: otp,
+      type: 'sms',
+    });
+
     setLoading(false);
 
     if (error) {
@@ -81,7 +113,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   const handleRegister = () => {
-    navigation.navigate("Register");
+    Keyboard.dismiss();
+    setTimeout(() => {
+      navigation.navigate("Register");
+    }, 150);
   };
 
   return (
@@ -111,58 +146,68 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <View style={styles.card}>
           <Text style={styles.welcomeText}>Welcome Back</Text>
 
-          {/* Email/Phone Input */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email or Phone Number"
-              placeholderTextColor="#9ca3af"
-              value={emailOrPhone}
-              onChangeText={setEmailOrPhone}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          </View>
+          {!otpSent ? (
+            <>
+              {/* Phone Input */}
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#9ca3af"
+                  value={phone}
+                  onChangeText={handlePhoneChange}
+                  keyboardType="numeric"
+                  maxLength={13} // Allow space for pasted +91... before it gets stripped
+                  autoCapitalize="none"
+                />
+              </View>
 
-          {/* Password Input */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#9ca3af"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-            <TouchableOpacity
-              style={styles.eyeIcon}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <Ionicons
-                name={showPassword ? "eye" : "eye-off"}
-                size={20}
-                color="#4b5563"
-              />
-            </TouchableOpacity>
-          </View>
+              {/* Send OTP Button */}
+              <TouchableOpacity 
+                style={[styles.loginButton, loading && { opacity: 0.7 }]} 
+                onPress={handleSendOtp}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Send OTP</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              {/* OTP Input */}
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter 6-digit OTP"
+                  placeholderTextColor="#9ca3af"
+                  value={otp}
+                  onChangeText={setOtp}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                />
+              </View>
 
-          {/* Forgot Password */}
-          {/* <TouchableOpacity style={styles.forgotPassword}>
-            <Text style={styles.forgotPasswordText}>forgot password</Text>
-          </TouchableOpacity> */}
-
-          {/* Login Button */}
-          <TouchableOpacity 
-            style={[styles.loginButton, loading && { opacity: 0.7 }]} 
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.loginButtonText}>Let's Go</Text>
-            )}
-          </TouchableOpacity>
+              {/* Verify OTP Button */}
+              <TouchableOpacity 
+                style={[styles.loginButton, loading && { opacity: 0.7 }]} 
+                onPress={handleVerifyOtp}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.loginButtonText}>Verify & Login</Text>
+                )}
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.forgotPassword} onPress={() => setOtpSent(false)}>
+                <Text style={styles.forgotPasswordText}>Change Phone Number</Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Divider */}
           <View style={styles.divider} />

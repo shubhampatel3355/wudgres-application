@@ -12,53 +12,87 @@ import {
   ImageBackground,
   Image,
   ScrollView,
+  Keyboard,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { supabase } from "../lib/supabase";
+import * as SecureStore from "expo-secure-store";
 
 interface RegisterScreenProps {
   navigation: any;
+  route?: any;
 }
 
-export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
+export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, route }) => {
+  const { initialPhone } = route?.params || {};
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [phone, setPhone] = useState(initialPhone || "");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const formatPhone = (p: string) => {
-    return p.startsWith("+") ? p : `+91${p}`;
+  const handlePhoneChange = (text: string) => {
+    // Strip +91 if pasted
+    let cleaned = text.replace(/^\+91/, '');
+    // Remove all non-numeric characters
+    cleaned = cleaned.replace(/[^0-9]/g, '');
+    // Limit to 10 digits
+    if (cleaned.length > 10) {
+      cleaned = cleaned.slice(0, 10);
+    }
+    setPhone(cleaned);
   };
 
-  const handleRegister = async () => {
-    if (!name || !email || !phone || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+  const handleSendOtp = async () => {
+    if (loading) return; // Prevent double clicks
+    if (!name || !email || !phone || phone.length !== 10) {
+      Alert.alert("Error", "Please fill in all fields with a valid 10-digit phone number");
       return;
     }
 
     setLoading(true);
+    const formattedPhone = `+91${phone}`;
 
-    // Step 1: Create the auth account
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        data: {
-          full_name: name,
-          phone: formatPhone(phone),
-        },
-      },
+    // Trigger OTP sending via Supabase Auth
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: formattedPhone,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      Alert.alert("Error", error.message);
+    } else {
+      setOtpSent(true);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (loading) return; // Prevent double clicks
+    if (!otp) {
+      Alert.alert("Error", "Please enter the OTP");
+      return;
+    }
+
+    setLoading(true);
+    const formattedPhone = `+91${phone}`;
+
+    // Step 1: Verify OTP (This securely logs them in / creates their auth user)
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone: formattedPhone,
+      token: otp,
+      type: 'sms',
     });
 
     if (error) {
       setLoading(false);
-      Alert.alert("Registration Failed", error.message);
+      Alert.alert("Verification Failed", error.message);
       return;
     }
 
-    // Step 2: Directly upsert the profile with all fields
+    // Step 2: Now that they are authenticated, save their name/email to profiles
     if (data?.user?.id) {
       const { error: profileError } = await supabase
         .from("profiles")
@@ -66,8 +100,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
           id: data.user.id,
           name: name,
           email: email,
-          phone: formatPhone(phone),
-          password: password,
+          phone: formattedPhone,
           is_admin: false,
         });
 
@@ -75,6 +108,8 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
         console.warn("Profile upsert warning:", profileError.message);
       }
     }
+
+    await SecureStore.setItemAsync('session_start_time', Date.now().toString());
 
     setLoading(false);
     Alert.alert("Success", "Account created successfully!");
@@ -108,76 +143,87 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
           <View style={styles.card}>
             <Text style={styles.welcomeText}>Sign Up</Text>
 
-            {/* Name Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Full Name"
-                placeholderTextColor="#9ca3af"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
+            {!otpSent ? (
+              <>
+                {/* Name Input */}
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Full Name"
+                    placeholderTextColor="#9ca3af"
+                    value={name}
+                    onChangeText={setName}
+                  />
+                </View>
 
-            {/* Email Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email Address"
-                placeholderTextColor="#9ca3af"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+                {/* Email Input (Optional) */}
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email Address"
+                    placeholderTextColor="#9ca3af"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
 
-            {/* Phone Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Phone No."
-                placeholderTextColor="#9ca3af"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-            </View>
+                {/* Phone Input */}
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Phone No."
+                    placeholderTextColor="#9ca3af"
+                    value={phone}
+                    onChangeText={handlePhoneChange}
+                    keyboardType="numeric"
+                    maxLength={13}
+                  />
+                </View>
 
-            {/* Password Input */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#9ca3af"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? "eye" : "eye-off"}
-                  size={20}
-                  color="#4b5563"
-                />
-              </TouchableOpacity>
-            </View>
+                {/* Send OTP Button */}
+                <TouchableOpacity
+                  style={[styles.loginButton, loading && { opacity: 0.7 }]}
+                  onPress={handleSendOtp}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.loginButtonText}>Send OTP</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                {/* OTP Input */}
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter 6-digit OTP"
+                    placeholderTextColor="#9ca3af"
+                    value={otp}
+                    onChangeText={setOtp}
+                    keyboardType="number-pad"
+                    maxLength={6}
+                  />
+                </View>
 
-            {/* Register Button */}
-            <TouchableOpacity
-              style={[styles.loginButton, loading && { opacity: 0.7 }]}
-              onPress={handleRegister}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.loginButtonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
+                {/* Verify & Create Account Button */}
+                <TouchableOpacity
+                  style={[styles.loginButton, loading && { opacity: 0.7 }]}
+                  onPress={handleVerifyOtp}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.loginButtonText}>Verify & Create Account</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
 
             {/* Divider */}
             <View style={styles.divider} />
@@ -187,7 +233,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
               <Text style={styles.newUserText}>Already have an account?</Text>
               <TouchableOpacity
                 style={styles.registerButton}
-                onPress={() => navigation.navigate("Login")}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setTimeout(() => {
+                    navigation.navigate("Login");
+                  }, 150);
+                }}
               >
                 <Text style={styles.registerButtonText}>Login</Text>
               </TouchableOpacity>

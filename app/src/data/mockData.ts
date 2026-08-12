@@ -7,26 +7,28 @@ export const backgroundImages = {
     hero: require('../assets/images/backgrounds/wood-texture.jpg'), // Fallback
 };
 
+// Category images are now served from Supabase Storage.
+// These are null fallbacks — the app fetches live URLs from app_category_images table.
 const categoryImages = {
-    doors: require('../assets/images/home/Door Forest Web bg.jpg'),
-    enggWood: require('../assets/images/home/Frames Bg.jpg'),
-    plywood: require('../assets/images/home/Ply Wood Bg.jpg'),
-    windowshutters: require('../assets/images/home/WINDOWS Web BG.jpg'),
-    nfc: require('../assets/images/home/NFC Web bg.jpg'),
+    doors: null,
+    enggWood: null,
+    plywood: null,
+    windowshutters: null,
+    nfc: null,
 };
 
 const seriesImages = {
-    venDecor: require('../assets/images/door/door-image/Ven-Decor.png'),
-    lamorous: require('../assets/images/door/door-image/Lamorous.png'),
-    timbor: require('../assets/images/door/timbor/Timbor.png'),
-    teakVeneer: require('../assets/images/door/teak/Teak Veneer.png'),
-    metalem: require('../assets/images/door/metalem/Metalem.png'),
-    espial: require('../assets/images/door/espial/Espial.png'),
-    divine: require('../assets/images/door/divine/Divine.png'),
-    embozz: require('../assets/images/door/embozz/Embozz.png'),
-    lamina: require('../assets/images/door/lamina/Lamina 2.png'),
-    solidWhite: require('../assets/images/door/door-image/Solid White.png'),
-    flushDoors: require('../assets/images/door/door-image/Flush Doors.png'),
+    venDecor: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-decor.png" },
+    lamorous: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous.png" },
+    timbor: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/timbor.png" },
+    teakVeneer: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/teak-veneer.png" },
+    metalem: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/metalem.png" },
+    espial: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/espial.png" },
+    divine: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/divine.png" },
+    embozz: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/embozz.png" },
+    lamina: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamina-2.png" },
+    solidWhite: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white.png" },
+    flushDoors: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/flush-doors.png" },
 };
 
 export const categories = [

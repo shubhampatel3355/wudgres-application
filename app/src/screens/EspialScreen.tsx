@@ -19,7 +19,7 @@ import { supabase } from "../lib/supabase";
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
-  return require("../assets/images/door/espial/Espial.png");
+  return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/espial.png" };
 };
 
 interface EspialScreenProps {

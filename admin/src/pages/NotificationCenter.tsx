@@ -73,7 +73,7 @@ const NotificationCenter = () => {
 
         for (const chunk of chunks) {
           try {
-            const res = await fetch('https://exp.host/--/api/v2/push/send', {
+            const res = await fetch('/expo-api/--/api/v2/push/send', {
               method: 'POST',
               headers: {
                 'Accept': 'application/json',

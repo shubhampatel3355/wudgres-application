@@ -22,17 +22,17 @@ import { supabase } from "../lib/supabase";
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
-  if (!name) return backgroundImages.hero;
+  if (!name) return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous.png" };
   const lowerName = name.toLowerCase();
   if (lowerName.includes("prime"))
-    return require("../assets/images/door/lamorous/lamrours-img/Lamorous Prime.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous-prime.png" };
   if (lowerName.includes("eco"))
-    return require("../assets/images/door/lamorous/lamrours-img/lamorous eco.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous-eco.png" };
   if (lowerName.includes("elite"))
-    return require("../assets/images/door/lamorous/lamrours-img/lamorous elite.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous-elite.png" };
   if (lowerName.includes("rich"))
-    return require("../assets/images/door/lamorous/lamrours-img/lamorous rich.png");
-  return backgroundImages.hero;
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous-rich.png" };
+  return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous.png" };
 };
 
 const SeriesTabCard = ({ series, onPress, isSelected }: { series: any, onPress: () => void, isSelected: boolean }) => {

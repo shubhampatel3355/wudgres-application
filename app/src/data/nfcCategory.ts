@@ -10,8 +10,8 @@ export interface NFCCategory {
 
 // NFC category images (using door images as placeholders until NFC images are added)
 const nfcCategoryImages = {
-    nfcDoors: require('../assets/images/wpc/NFC Doors.png'),
-    nfcFrames: require('../assets/images/wpc/NFC Frames Bg.png'),
+    nfcDoors: { uri: 'https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-doors-category.png' },
+    nfcFrames: { uri: 'https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-frames-category.png' },
 };
 
 export const nfcCategories: NFCCategory[] = [

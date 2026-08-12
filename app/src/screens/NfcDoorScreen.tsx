@@ -20,13 +20,13 @@ import { supabase } from "../lib/supabase";
 import { getCached, setCached } from "../lib/queryCache";
 
 const getSubSeriesImage = (name: string) => {
-  if (!name) return require("../assets/images/wpc/NFC Doors.png");
+  if (!name) return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-doors-category.png" };
   const lowerName = name.toLowerCase();
   if (lowerName.includes("eco") || lowerName.includes("legend"))
-    return require("../assets/images/door/nfc/NFC Legend.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-legend.png" };
   if (lowerName.includes("rich"))
-    return require("../assets/images/door/nfc/NFC rich.png");
-  return require("../assets/images/wpc/NFC Doors.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-rich.png" };
+  return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-doors-category.png" };
 };
 
 const SeriesTabCard = ({ series, onPress, isSelected }: { series: any; onPress: () => void; isSelected: boolean }) => {
@@ -113,11 +113,16 @@ export const NfcDoorScreen: React.FC<NfcDoorScreenProps> = ({ navigation }) => {
             return;
           }
         }
-        setCached(CACHE_KEY, data);
-        setSpecificSeriesTabs(data);
-        setSelectedSeries(data[0].name);
-        setIsLoading(false);
-        return;
+        // If we found root categories but no children, we should fall through to the fallback
+        // so that we don't display 'NFC Doors' and 'NFC Frames' as tabs.
+        const validTabs = data.filter(s => s.name.toUpperCase() !== "NFC DOORS" && s.name.toUpperCase() !== "NFC FRAMES");
+        if (validTabs.length > 0) {
+          setCached(CACHE_KEY, validTabs);
+          setSpecificSeriesTabs(validTabs);
+          setSelectedSeries(validTabs[0].name);
+          setIsLoading(false);
+          return;
+        }
       }
     } catch (e) {
       console.log("Error fetching NFC series:", e);

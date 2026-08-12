@@ -90,10 +90,11 @@ const frameSpecifications = [
 export const EngineeredWoodFrameDetailScreen: React.FC<
   ProductDetailScreenProps
 > = ({ navigation, route }) => {
-  const { productId } = route.params;
+  const productId = route.params?.productId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [frameDimensions, setFrameDimensions] = useState<any[]>([]);
 
   // Customization state
   const [selectedWidth, setSelectedWidth] = useState<string>("36");
@@ -128,6 +129,15 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
 
   const fetchProduct = async () => {
     setLoading(true);
+
+    // Fetch frame dimensions from dashboard
+    const { data: dimRows } = await supabase
+      .from("frame_dimensions")
+      .select("*")
+      .eq("series_slug", "eng-wood-frames")
+      .order("sort_order");
+    setFrameDimensions(dimRows || []);
+
     if (productId === "eng-wood-frame-static") {
       setProduct({
         id: "eng-wood-frame-static",
@@ -153,19 +163,25 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
   };
 
   const framePricing = useMemo(() => {
-    const dims = product?.dimensions
-      ? product.dimensions.split(",").map((s: string) => s.trim())
-      : [];
-    const rates = product?.rate
-      ? product.rate.split(",").map((s: string) => s.trim())
-      : [];
-
-    return dims.map((dim: string, i: number) => ({
-      id: String.fromCharCode(65 + i), // A, B, C...
-      description: dim,
-      rate: rates[i] || "-",
+    // If DB has rows, use them (5-column: description, length, elite, rich, eco)
+    if (frameDimensions && frameDimensions.length > 0) {
+      return frameDimensions.map(r => ({
+        description: r.description,
+        length: r.col2 || "-",
+        elite: r.col3 || "-",
+        rich: r.col4 || "-",
+        eco: r.col5 || "-",
+      }));
+    }
+    // Static fallback
+    return frameSpecifications.map(r => ({
+      description: r.description,
+      length: r.length,
+      elite: r.elite,
+      rich: r.rich,
+      eco: r.eco,
     }));
-  }, [product]);
+  }, [frameDimensions]);
 
   if (loading || !product) {
     const glassColor = "rgba(255,255,255,0.15)";
@@ -334,7 +350,7 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
             style={{ alignItems: "center", width: "100%", paddingVertical: 20 }}
           >
             <Image
-              source={require("../assets/images/products/engg1.webp")}
+              source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/eng-wood-frames/engg1.webp" }}
               style={{
                 width: width - 40,
                 height: 200,
@@ -343,7 +359,7 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
               }}
             />
             <Image
-              source={require("../assets/images/products/engg2.webp")}
+              source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/eng-wood-frames/engg2.webp" }}
               style={{
                 width: width - 40,
                 height: 100,
@@ -459,7 +475,7 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
               </View>
 
               {/* Table Body */}
-              {frameSpecifications.map((item, index) => (
+              {framePricing.map((item, index) => (
                 <View
                   key={index}
                   style={[
@@ -485,6 +501,7 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
                     <Text
                       style={[
                         styles.tableCell,
+                        styles.priceHighlight,
                         { flex: 1, textAlign: "center" },
                       ]}
                     >
@@ -493,6 +510,7 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
                     <Text
                       style={[
                         styles.tableCell,
+                        styles.priceHighlight,
                         { flex: 1, textAlign: "center" },
                       ]}
                     >
@@ -501,6 +519,7 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
                     <Text
                       style={[
                         styles.tableCell,
+                        styles.priceHighlight,
                         { flex: 1, textAlign: "center" },
                       ]}
                     >
@@ -881,14 +900,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   tableCell: {
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    fontSize: 9,
-    fontFamily: "Gilroy-Regular",
+    fontFamily: "Gilroy-Medium",
+    fontSize: 10,
     color: "#333333",
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
-    borderRightColor: "#EEEEEE",
-    justifyContent: "center",
+    borderRightColor: "#E5E7EB",
+  },
+  priceHighlight: {
+    fontFamily: "Gilroy-Bold",
+    fontSize: 10,
+    color: theme.colors.primary,
   },
   tableHeaderText: {
     fontFamily: "Gilroy-Regular",

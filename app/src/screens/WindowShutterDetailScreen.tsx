@@ -27,19 +27,12 @@ interface ProductDetailScreenProps {
   route: any;
 }
 
+// Fallback static data (used only if DB has no rows configured)
 const frameSpecifications = [
   { id: "A", description: "67MM X 32MM Height Upto 48 Inches", rate: "295.00" },
-  {
-    id: "B",
-    description: "67MM X 32MM Height above 48 Inches",
-    rate: "320.00",
-  },
+  { id: "B", description: "67MM X 32MM Height above 48 Inches", rate: "320.00" },
   { id: "C", description: "92MM X 32MM Height Upto 48 Inches", rate: "395.00" },
-  {
-    id: "D",
-    description: "92MM X 32MM Height above 48 Inches",
-    rate: "420.00",
-  },
+  { id: "D", description: "92MM X 32MM Height above 48 Inches", rate: "420.00" },
 ];
 
 
@@ -47,10 +40,11 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { productId } = route.params;
+  const productId = route.params?.productId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [frameDimensions, setFrameDimensions] = useState<any[]>([]);
 
   // Customization state
   const [selectedWidth, setSelectedWidth] = useState<string>("36");
@@ -85,6 +79,22 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
+
+    // Fetch frame dimensions from dashboard
+    const { data: dimRows } = await supabase
+      .from("frame_dimensions")
+      .select("*")
+      .eq("series_slug", "window-shutters")
+      .order("sort_order");
+    setFrameDimensions(dimRows || []);
+
+    const { data: catData } = await supabase
+      .from("app_category_images")
+      .select("hero_image_url, image_url")
+      .eq("id", "window-shutters")
+      .single();
+    const dynamicImage = catData?.hero_image_url || catData?.image_url || null;
+
     if (productId === "shutter-static") {
       setProduct({
         id: "shutter-static",
@@ -96,6 +106,7 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
           "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
         rate: "295.00, 320.00, 395.00, 420.00",
         image_url: null,
+        hero_image_url: dynamicImage
       });
     } else {
       const { data } = await supabase
@@ -103,25 +114,36 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
         .select("*, series(name)")
         .eq("id", productId)
         .single();
-      if (data) setProduct(data);
+      if (data) {
+        data.hero_image_url = dynamicImage;
+        setProduct(data);
+      }
     }
     setLoading(false);
   };
 
   const framePricing = useMemo(() => {
+    // If DB has rows, use them
+    if (frameDimensions && frameDimensions.length > 0) {
+      return frameDimensions.map((r, i) => ({
+        id: String.fromCharCode(65 + i),
+        description: r.description,
+        rate: r.col2 || "-",
+      }));
+    }
+    // Static fallback
     const dims = product?.dimensions
       ? product.dimensions.split(",").map((s: string) => s.trim())
       : [];
     const rates = product?.rate
       ? product.rate.split(",").map((s: string) => s.trim())
       : [];
-
     return dims.map((dim: string, i: number) => ({
-      id: String.fromCharCode(65 + i), // A, B, C...
+      id: String.fromCharCode(65 + i),
       description: dim,
       rate: rates[i] || "-",
     }));
-  }, [product]);
+  }, [product, frameDimensions]);
 
   if (loading || !product) {
     const glassColor = "rgba(255,255,255,0.15)";
@@ -289,15 +311,28 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
           <View
             style={{ alignItems: "center", width: "100%", paddingVertical: 20 }}
           >
-            <Image
-              source={require("../assets/images/products/windowshut.png")}
-              style={{
-                width: width - 40,
-                height: 200,
-                resizeMode: "contain",
-                marginBottom: 10,
-              }}
-            />
+            {product.hero_image_url ? (
+              <Image
+                source={{ uri: product.hero_image_url }}
+                style={{
+                  width: width - 40,
+                  height: 250,
+                  resizeMode: "contain",
+                  marginBottom: 10,
+                  borderRadius: 12
+                }}
+              />
+            ) : (
+              <Image
+                source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/thumbnails/window-shutters.jpg" }}
+                style={{
+                  width: width - 40,
+                  height: 200,
+                  resizeMode: "contain",
+                  marginBottom: 10,
+                }}
+              />
+            )}
           </View>
           <TouchableOpacity style={styles.favoriteButton}>
             <Ionicons name="heart-outline" size={24} color="#000" />
@@ -411,6 +446,7 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
                   <Text
                     style={[
                       styles.tableCell,
+                      styles.priceHighlight,
                       { flex: 1.5, textAlign: "center" },
                     ]}
                   >
@@ -699,13 +735,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   tableCell: {
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    fontFamily: "Gilroy-Medium",
     fontSize: 10,
-    fontFamily: "Gilroy-Regular",
     color: "#333333",
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
-    borderRightColor: "#EEEEEE",
+    borderRightColor: "#E5E7EB",
+  },
+  priceHighlight: {
+    fontFamily: "Gilroy-Bold",
+    fontSize: 10,
+    color: theme.colors.primary,
   },
   tableHeaderText: {
     fontFamily: "Gilroy-Regular",

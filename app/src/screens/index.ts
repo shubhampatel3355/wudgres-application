@@ -1,4 +1,5 @@
 export { LoginScreen } from './LoginScreen';
+export * from './DynamicCategoryScreen';
 export { HomeScreen } from './HomeScreen';
 export { AllProductsScreen } from './AllProductsScreen';
 export { ProductSeriesScreen } from './ProductSeriesScreen';

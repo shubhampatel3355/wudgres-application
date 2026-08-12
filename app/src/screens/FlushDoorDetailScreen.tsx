@@ -31,10 +31,11 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { productId } = route.params;
+  const productId = route.params?.productId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [frameDimensions, setFrameDimensions] = useState<any[]>([]);
 
   const slideAnim = useRef(new Animated.Value(50)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -58,6 +59,15 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
+
+    // Fetch frame dimensions from dashboard
+    const { data: dimRows } = await supabase
+      .from("frame_dimensions")
+      .select("*")
+      .eq("series_slug", "flush-doors")
+      .order("sort_order");
+    setFrameDimensions(dimRows || []);
+
     if (productId === "flush-door-static") {
       let fetchedImageUrl = null;
 
@@ -112,6 +122,15 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   };
 
   const framePricing = useMemo(() => {
+    // If DB has rows, use them
+    if (frameDimensions && frameDimensions.length > 0) {
+      return frameDimensions.map((r, i) => ({
+        id: String.fromCharCode(65 + i),
+        description: r.description,
+        rate: r.col2 || "-",
+      }));
+    }
+    // Static fallback
     const dims = product?.dimensions
       ? product.dimensions.split(",").map((s: string) => s.trim())
       : [];
@@ -124,7 +143,7 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
       description: dim,
       rate: rates[i] || "-",
     }));
-  }, [product]);
+  }, [product, frameDimensions]);
 
   if (loading || !product) {
     const glassColor = "rgba(255,255,255,0.15)";
@@ -388,6 +407,7 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
                     <Text
                       style={[
                         styles.tableCell,
+                        styles.priceHighlight,
                         { flex: 1, textAlign: "center", borderRightWidth: 0 },
                       ]}
                     >
@@ -611,14 +631,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   tableCell: {
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    fontSize: 9,
-    fontFamily: "Gilroy-Regular",
+    fontFamily: "Gilroy-Medium",
+    fontSize: 10,
     color: "#333333",
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
-    borderRightColor: "#EEEEEE",
-    justifyContent: "center",
+    borderRightColor: "#E5E7EB",
+  },
+  priceHighlight: {
+    fontFamily: "Gilroy-Bold",
+    fontSize: 10,
+    color: theme.colors.primary,
   },
   tableHeaderText: {
     fontFamily: "Gilroy-Regular",

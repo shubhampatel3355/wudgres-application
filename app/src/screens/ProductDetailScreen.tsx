@@ -32,7 +32,7 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { productId } = route.params;
+  const productId = route.params?.productId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);

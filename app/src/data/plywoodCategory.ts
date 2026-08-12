@@ -9,8 +9,8 @@ export interface PlywoodCategory {
 }
 
 const plywoodCategoryImages = {
-    plywood: require('../assets/images/home/plywoodmain.jpeg'),
-    blockBoard: require('../assets/images/home/blockboardmain.jpeg'),
+    plywood: { uri: 'https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/plywood/plywoodmain.jpeg' },
+    blockBoard: { uri: 'https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/plywood/blockboardmain.jpeg' },
 };
 
 export const plywoodCategories: PlywoodCategory[] = [

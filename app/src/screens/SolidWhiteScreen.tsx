@@ -22,14 +22,13 @@ import { supabase } from "../lib/supabase";
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
-  if (!name || name === "All")
-    return require("../assets/images/door/door-image/Solid White.png");
+  if (!name) return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white.png" };
   const lowerName = name.toLowerCase();
   if (lowerName.includes("eco"))
-    return require("../assets/images/door/solid-white/sloid-img/solid white eco.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white-eco.png" };
   if (lowerName.includes("rich"))
-    return require("../assets/images/door/solid-white/sloid-img/solid white rich.png");
-  return require("../assets/images/door/door-image/Solid White.png");
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white-rich.png" };
+  return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white.png" };
 };
 
 const SeriesTabCard = ({ series, onPress, isSelected }: { series: any, onPress: () => void, isSelected: boolean }) => {

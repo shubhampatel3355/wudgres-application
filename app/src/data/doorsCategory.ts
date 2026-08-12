@@ -8,19 +8,18 @@ export interface DoorCategory {
     description: string;
 }
 
-// Use existing series images for door categories
 const doorCategoryImages = {
-    timborAcacia: require('../assets/images/door/timbor/Timbor.png'),
-    venDecor: require('../assets/images/door/door-image/Ven-Decor.png'),
-    teakVeneer: require('../assets/images/door/teak/Teak Veneer.png'),
-    lamorous: require('../assets/images/door/door-image/Lamorous.png'),
-    metalem: require('../assets/images/door/metalem/Metalem.png'),
-    espial: require('../assets/images/door/espial/Espial.png'),
-    divine: require('../assets/images/door/divine/Divine.png'),
-    embozz: require('../assets/images/door/embozz/Embozz.png'),
-    lamina: require('../assets/images/door/lamina/Lamina.png'),
-    solidWhite: require('../assets/images/door/door-image/Solid White.png'),
-    flushDoors: require('../assets/images/door/door-image/Flush Doors.png'),
+    timborAcacia: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/timbor.png" },
+    venDecor: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-decor.png" },
+    teakVeneer: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/teak-veneer.png" },
+    lamorous: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous.png" },
+    metalem: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/metalem.png" },
+    espial: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/espial.png" },
+    divine: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/divine.png" },
+    embozz: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/embozz.png" },
+    lamina: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamina.png" },
+    solidWhite: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white.png" },
+    flushDoors: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/flush-doors.png" },
 };
 
 export const doorCategories: DoorCategory[] = [

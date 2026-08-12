@@ -27,6 +27,7 @@ interface ProductDetailScreenProps {
   route: any;
 }
 
+// Fallback static data (used only if DB has no rows configured)
 const frameSpecifications = [
   { id: "1", description: "FRAME SECTION 60x30", density: "0.350 KG / RFT" },
   { id: "2", description: "FRAME SECTION 75X50", density: "0.950 KG / RFT" },
@@ -74,10 +75,12 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { productId } = route.params;
+  const productId = route.params?.productId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [pricingRules, setPricingRules] = useState<any[]>([]);
+  const [frameDimensions, setFrameDimensions] = useState<any[]>([]);
 
   // Customization state
   const [selectedWidth, setSelectedWidth] = useState<string>("36");
@@ -112,6 +115,22 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
+    
+    // Fetch pricing rules for NFC Frames
+    const { data: sData } = await supabase.from("series").select("*").eq("slug", "nfc-frames").maybeSingle();
+    if (sData) {
+      const { data: rules } = await supabase.from("pricing_rules").select("*").eq("series_id", sData.id);
+      setPricingRules(rules || []);
+    }
+
+    // Fetch frame dimensions from dashboard
+    const { data: dimRows } = await supabase
+      .from("frame_dimensions")
+      .select("*")
+      .eq("series_slug", "nfc-frames")
+      .order("sort_order");
+    setFrameDimensions(dimRows || []);
+
     if (productId === "frame-static") {
       setProduct({
         id: "frame-static",
@@ -136,15 +155,36 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
   };
 
   const framePricing = useMemo(() => {
+    // If DB has rows, use them
+    if (frameDimensions && frameDimensions.length > 0) {
+      return frameDimensions.map((r, i) => ({
+        id: String.fromCharCode(65 + i),
+        description: r.description,
+        density: r.col2 || "-",
+        rate: r.col3 || "-",
+      }));
+    }
+    // If pricing rules exist (legacy path)
+    if (pricingRules && pricingRules.length > 0) {
+      return pricingRules.map((r, i) => ({
+        id: String.fromCharCode(65 + i),
+        description: r.finish || r.shade || r.thickness || "Standard",
+        density:
+          frameSpecifications.find(
+            (f) => f.description.toLowerCase() === (r.finish || "").toLowerCase(),
+          )?.density || "-",
+        rate: r.rate ? `₹${r.rate.toLocaleString("en-IN")} / RFT` : "-",
+      }));
+    }
+    // Static fallback
     const dims = product?.dimensions
       ? product.dimensions.split(",").map((s: string) => s.trim())
       : [];
     const rates = product?.rate
       ? product.rate.split(",").map((s: string) => s.trim())
       : [];
-
     return dims.map((dim: string, i: number) => ({
-      id: String.fromCharCode(65 + i), // A, B, C...
+      id: String.fromCharCode(65 + i),
       description: dim,
       density:
         frameSpecifications.find(
@@ -152,7 +192,7 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
         )?.density || "-",
       rate: rates[i] || "-",
     }));
-  }, [product]);
+  }, [product, pricingRules, frameDimensions]);
 
   if (loading || !product) {
     const glassColor = "rgba(255,255,255,0.15)";
@@ -321,7 +361,7 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
             style={{ alignItems: "center", width: "100%", paddingVertical: 20 }}
           >
             <Image
-              source={require("../assets/images/wpc/wpc-frame/wpc-frame1.png")}
+              source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/wpc-frame1.png" }}
               style={{
                 width: width - 40,
                 height: 200,
@@ -330,7 +370,7 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
               }}
             />
             <Image
-              source={require("../assets/images/wpc/wpc-frame/wpc-frame2.png")}
+              source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/wpc-frame2.png" }}
               style={{ width: width - 40, height: 200, resizeMode: "contain" }}
             />
           </View>
@@ -438,7 +478,7 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
                   <Text style={[styles.tableCell, { flex: 1.5 }]}>
                     {item.density}
                   </Text>
-                  <Text style={[styles.tableCell, { flex: 1.5 }]}>
+                  <Text style={[styles.tableCell, styles.priceHighlight, { flex: 1.5 }]}>
                     {item.rate}
                   </Text>
                 </View>
@@ -758,13 +798,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
   },
   tableCell: {
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    fontFamily: "Gilroy-Medium",
     fontSize: 10,
-    fontFamily: "Gilroy-Regular",
     color: "#333333",
+    paddingVertical: 10,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
-    borderRightColor: "#EEEEEE",
+    borderRightColor: "#E5E7EB",
+  },
+  priceHighlight: {
+    fontFamily: "Gilroy-Bold",
+    fontSize: 10,
+    color: theme.colors.primary,
   },
   tableHeaderText: {
     fontFamily: "Gilroy-Regular",

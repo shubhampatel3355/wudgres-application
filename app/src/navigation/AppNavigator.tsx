@@ -44,6 +44,7 @@ import {
     SupportContactScreen,
     PrivacySecurityScreen,
     NotificationsScreen,
+    DynamicCategoryScreen,
 } from '../screens';
 import { DoorsIcon } from '../components';
 import { theme } from '../theme';
@@ -283,6 +284,7 @@ export const AppNavigator = () => {
                 <Stack.Screen name="PlywoodDetail" component={PlywoodDetailScreen} />
                 <Stack.Screen name="BlockBoardDetail" component={BlockBoardDetailScreen} />
                 <Stack.Screen name="FlushDoorDetail" component={FlushDoorDetailScreen} />
+                <Stack.Screen name="DynamicCategory" component={DynamicCategoryScreen} />
                 <Stack.Group screenOptions={{ presentation: 'transparentModal', animation: 'slide_from_bottom' }}>
                     <Stack.Screen name="Search" component={SearchScreen} />
                 </Stack.Group>

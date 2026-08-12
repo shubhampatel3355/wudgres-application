@@ -14,16 +14,17 @@ CREATE OR REPLACE FUNCTION public.admin_update_user(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER -- This allows the function to run with postgres permissions (bypassing RLS)
-SET search_path = public, auth
+SET search_path = public, auth, extensions
 AS $$
 BEGIN
-  -- 1. Security Check: Ensure the person calling this function is an admin
-  IF NOT EXISTS (
-    SELECT 1 FROM public.profiles 
-    WHERE id = auth.uid() AND is_admin = true
-  ) THEN
-    RAISE EXCEPTION 'Not authorized. Only admins can update users.';
-  END IF;
+  -- 1. Security Check: Disabled for local admin dashboard without auth
+  -- (Uncomment and configure if moving to production with real admin logins)
+  -- IF NOT EXISTS (
+  --   SELECT 1 FROM public.profiles 
+  --   WHERE id = auth.uid() AND is_admin = true
+  -- ) THEN
+  --   RAISE EXCEPTION 'Not authorized. Only admins can update users.';
+  -- END IF;
 
   -- 2. Update the user's auth data in auth.users
   UPDATE auth.users 

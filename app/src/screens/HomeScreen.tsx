@@ -35,6 +35,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("User");
   const [heroContent, setHeroContent] = useState<any>(null);
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>(categories);
   const scrollX = useRef(new Animated.Value(0)).current;
 
   // Animation values
@@ -75,16 +76,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   };
 
+  const fetchCategoryImages = async () => {
+    try {
+      const { data } = await supabase.from('app_category_images').select('*');
+      if (data && data.length > 0) {
+        const updatedCategories = categories.map(cat => {
+          const remoteCat = data.find(d => d.id === cat.id);
+          if (remoteCat && remoteCat.image_url) {
+            return { ...cat, image: { uri: remoteCat.image_url } };
+          }
+          return cat;
+        });
+        setDynamicCategories(updatedCategories);
+      }
+    } catch (err) {
+      console.log('Error fetching category images', err);
+    }
+  };
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchUser(), fetchHeroContent()]);
+    await Promise.all([fetchUser(), fetchHeroContent(), fetchCategoryImages()]);
     setRefreshing(false);
   };
 
   useEffect(() => {
 
-    // Run both fetches in parallel
-    Promise.all([fetchUser(), fetchHeroContent()]);
+    // Run fetches in parallel
+    Promise.all([fetchUser(), fetchHeroContent(), fetchCategoryImages()]);
 
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -306,8 +325,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </View>
 
             <View style={[styles.categoriesList, { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }]}>
-              {categories.map((item, index) => {
-                const isFull = categories.length === 1 || (categories.length % 2 !== 0 && index === categories.length - 1);
+              {dynamicCategories.map((item, index) => {
+                const isFull = dynamicCategories.length === 1 || (dynamicCategories.length % 2 !== 0 && index === dynamicCategories.length - 1);
                 return (
                   <View key={item.id} style={{ width: isFull ? '100%' : '48%' }}>
                     <CategoryCard

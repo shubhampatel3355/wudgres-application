@@ -13,6 +13,10 @@
       "resizeMode": "contain",
       "backgroundColor": "#1a1612"
     },
+    "notification": {
+      "icon": "./assets/icon.png",
+      "color": "#D4AF37"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.wudgres.app",
@@ -30,7 +34,8 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.wudgresreal",
-      "versionCode": 28,
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 29,
       "permissions": [
         "android.permission.NFC",
         "android.permission.CAMERA",
@@ -47,7 +52,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "d0841faf-2360-4dd2-883e-829dc416bcb1"
+        "projectId": "bdd23acb-7d71-4d9c-8f7d-9542d306d76c"
       }
     },
     "owner": "wudgres"

@@ -47,8 +47,8 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
 
   const handleSendOtp = async () => {
     if (loading) return; // Prevent double clicks
-    if (!name || !email || !phone || phone.length !== 10) {
-      Alert.alert("Error", "Please fill in all fields with a valid 10-digit phone number");
+    if (!name.trim() || !email.trim() || !phone || phone.length !== 10) {
+      Alert.alert("Error", "Please fill in all fields (Name, Email, and a valid 10-digit Phone No.)");
       return;
     }
 
@@ -156,7 +156,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
                   />
                 </View>
 
-                {/* Email Input (Optional) */}
+                {/* Email Input */}
                 <View style={styles.inputContainer}>
                   <TextInput
                     style={styles.input}

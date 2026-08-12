@@ -355,13 +355,9 @@ export const StoreLocatorScreen = () => {
 
       setHasLocationPermission(true);
 
-      // If we already have the data, don't refetch on every tab focus
-      if (allStores.length > 0 && userCoords) {
-        return;
-      }
-
+      // Always get a fresh GPS fix — high accuracy
       const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+        accuracy: Location.Accuracy.High,
       });
       const coords = {
         latitude: location.coords.latitude,
@@ -369,22 +365,25 @@ export const StoreLocatorScreen = () => {
       };
       setUserCoords(coords);
 
-      // Fetch from Supabase
-      const { data: dealers } = await supabase.from('dealers').select('*').eq('is_active', true);
-      const fetchedStores: Store[] = (dealers || []).map((d: any) => ({
-        "Store Name": d.store_name,
-        Pincode: d.pincode || '',
-        Address: d.address || '',
-        "Name Of Owner": d.owner_name || '',
-        Contact: d.contact || '',
-        "Google maps": d.google_maps_url || '',
-        lat: d.lat || 0,
-        lon: d.lon || 0,
-      }));
-      setAllStores(fetchedStores);
+      // Only fetch store list from DB if not already loaded
+      let stores = allStores;
+      if (stores.length === 0) {
+        const { data: dealers } = await supabase.from('dealers').select('*').eq('is_active', true);
+        stores = (dealers || []).map((d: any) => ({
+          "Store Name": d.store_name,
+          Pincode: d.pincode || '',
+          Address: d.address || '',
+          "Name Of Owner": d.owner_name || '',
+          Contact: d.contact || '',
+          "Google maps": d.google_maps_url || '',
+          lat: d.lat || 0,
+          lon: d.lon || 0,
+        }));
+        setAllStores(stores);
+      }
 
-      // Sort stores by distance
-      const sorted = computeDistances(coords.latitude, coords.longitude, fetchedStores);
+      // Always recompute distances from the fresh GPS fix
+      const sorted = computeDistances(coords.latitude, coords.longitude, stores);
       setFilteredStores(sorted);
       setIsLoading(false);
 
@@ -574,8 +573,9 @@ export const StoreLocatorScreen = () => {
     setIsLoading(true);
 
     try {
+      // Always get a fresh high-accuracy GPS fix
       const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+        accuracy: Location.Accuracy.High,
       });
       const coords = {
         latitude: location.coords.latitude,
@@ -584,11 +584,12 @@ export const StoreLocatorScreen = () => {
       setUserCoords(coords);
       setSearchQuery('');
 
+      // Recompute distances from exact current position
       const sorted = computeDistances(coords.latitude, coords.longitude, allStores);
       setFilteredStores(sorted);
       setIsLoading(false);
 
-      // Fit map tightly to user and nearby stores
+      // Fit map to user + nearby stores
       if (mapRef.current) {
         const nearby = sorted.filter((s) => s.distanceKm <= NEARBY_RADIUS_KM);
         if (nearby.length > 0) {

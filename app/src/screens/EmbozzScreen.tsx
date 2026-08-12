@@ -19,7 +19,7 @@ import { supabase } from "../lib/supabase";
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
-  return require("../assets/images/door/embozz/Embozz.png");
+  return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/embozz.png" };
 };
 
 interface EmbozzScreenProps {

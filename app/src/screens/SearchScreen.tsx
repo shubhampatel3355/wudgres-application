@@ -20,6 +20,7 @@ import { BlurView } from "expo-blur";
 import { ProductCard } from "../components";
 import { theme } from "../theme";
 import { supabase } from "../lib/supabase";
+import { backgroundImages } from "../data/mockData";
 
 if (
   Platform.OS === "android" &&
@@ -53,7 +54,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-ven-decor",
     name: "Ven Decor",
-    image_url: require("../assets/images/door/door-image/Ven-Decor.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-decor.png" },
     route: "VenDecor",
     isStatic: true,
     inHomeStack: true,
@@ -61,7 +62,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-lamorous",
     name: "Lamorous",
-    image_url: require("../assets/images/door/door-image/Lamorous.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamorous.png" },
     route: "Lamorous",
     isStatic: true,
     inHomeStack: true,
@@ -69,7 +70,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-timbor",
     name: "Legacy Wood",
-    image_url: require("../assets/images/door/timbor/Timbor.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/timbor.png" },
     route: "Timbor",
     isStatic: true,
     inHomeStack: true,
@@ -77,7 +78,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-lamina",
     name: "Lamina",
-    image_url: require("../assets/images/door/lamina/Lamina 2.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/lamina-2.png" },
     route: "Lamina",
     isStatic: true,
     inHomeStack: true,
@@ -85,7 +86,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-solid-white",
     name: "Solid White",
-    image_url: require("../assets/images/door/door-image/Solid White.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/solid-white.png" },
     route: "SolidWhite",
     isStatic: true,
     inHomeStack: true,
@@ -93,7 +94,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-teak-veneer",
     name: "Teak Veneer",
-    image_url: require("../assets/images/door/teak/Teak Veneer.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/teak-veneer.png" },
     route: "TeakVeneer",
     isStatic: true,
     inHomeStack: true,
@@ -101,7 +102,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-metalem",
     name: "Metalem",
-    image_url: require("../assets/images/door/metalem/Metalem.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/metalem.png" },
     route: "Metalem",
     isStatic: true,
     inHomeStack: true,
@@ -109,7 +110,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-espial",
     name: "Espial",
-    image_url: require("../assets/images/door/espial/Espial.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/espial.png" },
     route: "Espial",
     isStatic: true,
     inHomeStack: true,
@@ -117,7 +118,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-divine",
     name: "Divine",
-    image_url: require("../assets/images/door/divine/Divine.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/divine.png" },
     route: "Divine",
     isStatic: true,
     inHomeStack: true,
@@ -125,7 +126,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-embozz",
     name: "Embozz",
-    image_url: require("../assets/images/door/embozz/Embozz.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/embozz.png" },
     route: "Embozz",
     isStatic: true,
     inHomeStack: true,
@@ -133,7 +134,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-window-shutters",
     name: "Window Shutters",
-    image_url: require("../assets/images/home/WINDOWS Web BG.jpg"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/thumbnails/window-shutters.jpg" },
     route: "WindowShutterDetail",
     isStatic: true,
     inHomeStack: false,
@@ -141,7 +142,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-eng-wood-frames",
     name: "Engineered Wood Frames",
-    image_url: require("../assets/images/home/Frames Bg.jpg"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/thumbnails/eng-wood-frames.jpg" },
     route: "EngineeredWoodFrameDetail",
     isStatic: true,
     inHomeStack: false,
@@ -149,7 +150,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-plywood",
     name: "Plywood",
-    image_url: require("../assets/images/home/Ply Wood Bg.jpg"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/thumbnails/plywood.jpg" },
     route: "PlywoodCategory",
     isStatic: true,
     inHomeStack: true,
@@ -157,7 +158,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-block-boards",
     name: "Block Boards",
-    image_url: require("../assets/images/products/BLOCK-MR.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/plywood/block-mr.png" },
     route: "BlockBoardDetail",
     isStatic: true,
     inHomeStack: false,
@@ -165,7 +166,7 @@ const STATIC_CATEGORIES = [
   {
     id: "static-flush-doors",
     name: "Flush Doors",
-    image_url: require("../assets/images/door/door-image/Flush Doors.png"),
+    image_url: { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/flush-doors.png" },
     route: "FlushDoorDetail",
     isStatic: true,
     inHomeStack: false,
@@ -323,7 +324,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
                 <View style={styles.cardWrapper}>
                   <ProductCard
                     image={
-                      item.isStatic ? item.image_url : { uri: item.image_url }
+                      item.isStatic 
+                        ? (item.image_url || backgroundImages.hero) 
+                        : (item.image_url ? { uri: item.image_url } : backgroundImages.hero)
                     }
                     name={item.name}
                     index={index}

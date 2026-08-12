@@ -23,18 +23,17 @@ import { getCached, setCached } from "../lib/queryCache";
 const COLUMN_COUNT = 2;
 
 const getSubSeriesImage = (name: string) => {
-  switch (name) {
-    case "Ven Decor Legend":
-      return require("../assets/images/door/ven/Ven Decor Legend.png");
-    case "Ven Decor Lavish":
-      return require("../assets/images/door/ven/ven lavish.png");
-    case "Ven Decor Elite":
-      return require("../assets/images/door/ven/ven elite.png");
-    case "Ven Decor Rich":
-      return require("../assets/images/door/ven/ven rich.png");
-    default:
-      return backgroundImages.hero;
-  }
+  if (!name) return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-decor-legend.png" };
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes("legend"))
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-decor-legend.png" };
+  if (lowerName.includes("lavish"))
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-lavish.png" };
+  if (lowerName.includes("elite"))
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-elite.png" };
+  if (lowerName.includes("rich"))
+    return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-rich.png" };
+  return { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/doors/ven-decor-legend.png" };
 };
 
 const SeriesTabCard = ({ series, onPress, isSelected }: { series: any, onPress: () => void, isSelected: boolean }) => {

@@ -31,7 +31,7 @@ export const PlywoodDetailScreen: React.FC<ProductDetailScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { productId } = route.params;
+  const productId = route.params?.productId;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -200,7 +200,7 @@ export const PlywoodDetailScreen: React.FC<ProductDetailScreenProps> = ({
             style={{ alignItems: "center", width: "100%", paddingVertical: 50 }}
           >
             <Image
-              source={require("../assets/images/products/Ply-BWR.png")}
+              source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/plywood/ply-bwr.png" }}
               style={{
                 width: width - 40,
                 height: 200,
@@ -326,7 +326,7 @@ export const PlywoodDetailScreen: React.FC<ProductDetailScreenProps> = ({
             style={{ alignItems: "center", width: "100%", paddingVertical: 50 }}
           >
             <Image
-              source={require("../assets/images/products/Ply-BWP.png")}
+              source={{ uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/plywood/ply-bwp.png" }}
               style={{
                 width: width - 40,
                 height: 200,

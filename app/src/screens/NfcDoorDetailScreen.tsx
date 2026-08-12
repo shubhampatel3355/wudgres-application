@@ -86,6 +86,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [pricingRules, setPricingRules] = useState<any[]>([]);
 
   // Customization state
   const [selectedWidth, setSelectedWidth] = useState<string>("36");
@@ -135,31 +136,40 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
     let data: any[] | null = null;
 
+    const fetchPricingRules = async (productSeriesId?: string) => {
+      let allRules: any[] = [];
+      if (productSeriesId) {
+        const { data: specificRules } = await supabase.from("pricing_rules").select("*").eq("series_id", productSeriesId);
+        if (specificRules) allRules = [...specificRules];
+      }
+      setPricingRules(allRules);
+    };
+
     if (isLegend) {
       try {
         let res = await supabase
           .from("products")
-          .select("*, series(name)")
+          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
           .or("name.ilike.%legend%,name.ilike.%eco%,slug.ilike.%legend%,slug.ilike.%eco%")
           .limit(1);
         if (!res.data || res.data.length === 0) {
           res = await supabase
             .from("products")
-            .select("*, series(name)")
+            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
             .ilike("series.name", "%legend%")
             .limit(1);
         }
         if (!res.data || res.data.length === 0) {
           res = await supabase
             .from("products")
-            .select("*, series(name)")
+            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
             .ilike("series.name", "%eco%")
             .limit(1);
         }
         if (!res.data || res.data.length === 0) {
           const resId = await supabase
             .from("products")
-            .select("*, series(name)")
+            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
             .eq("id", productId)
             .maybeSingle();
           if (resId.data) res.data = [resId.data];
@@ -171,6 +181,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
       if (data && data.length > 0) {
         setProduct(data[0]);
+        await fetchPricingRules(data[0].series_id);
       } else {
         setProduct({
           id: "nfc-legend-static",
@@ -192,20 +203,20 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
       try {
         let res = await supabase
           .from("products")
-          .select("*, series(name)")
+          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
           .or("name.ilike.%rich%,slug.ilike.%rich%")
           .limit(1);
         if (!res.data || res.data.length === 0) {
           res = await supabase
             .from("products")
-            .select("*, series(name)")
+            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
             .ilike("series.name", "%rich%")
             .limit(1);
         }
         if (!res.data || res.data.length === 0) {
           const resId = await supabase
             .from("products")
-            .select("*, series(name)")
+            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
             .eq("id", productId)
             .maybeSingle();
           if (resId.data) res.data = [resId.data];
@@ -217,6 +228,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
       if (data && data.length > 0) {
         setProduct(data[0]);
+        await fetchPricingRules(data[0].series_id);
       } else {
         setProduct({
           id: "nfc-rich-static",
@@ -239,22 +251,24 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
       if (seriesName) {
         const { data: sData } = await supabase
           .from("products")
-          .select("*, series(name)")
+          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
           .ilike("series.name", `%${seriesName}%`)
           .limit(1);
         if (sData && sData.length > 0) {
           setProduct(sData[0]);
+          await fetchPricingRules(sData[0].series_id);
           fetched = true;
         }
       }
       if (!fetched && productId) {
         const { data: pData } = await supabase
           .from("products")
-          .select("*, series(name)")
+          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
           .eq("id", productId)
           .maybeSingle();
         if (pData) {
           setProduct(pData);
+          await fetchPricingRules(pData.series_id);
           fetched = true;
         }
       }
@@ -288,43 +302,51 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
     });
   };
 
-  // Parse options from product string lists, fallback, and sort by minimum value
-  const widths = useMemo(
-    () =>
-      product?.width
-        ? sortDimensions(
-            product.width
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean),
-          )
-        : ["36"],
-    [product],
-  );
-  const heights = useMemo(
-    () =>
-      product?.height
-        ? sortDimensions(
-            product.height
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean),
-          )
-        : ["84"],
-    [product],
-  );
-  const thicknesses = useMemo(
-    () =>
-      product?.thickness
-        ? sortDimensions(
-            product.thickness
-              .split(",")
-              .map((s: string) => s.trim())
-              .filter(Boolean),
-          )
-        : ["32"],
-    [product],
-  );
+  // Parse options from product string lists.
+  // Priority: series-level constraints > product-level data.
+  // If the series has defined allowed values, ONLY show those (ignoring stale product data).
+  const widths = useMemo(() => {
+    if (product?.series?.allowed_widths) {
+      return sortDimensions(
+        product.series.allowed_widths.split(",").map((s: string) => s.trim()).filter(Boolean)
+      );
+    }
+    return sortDimensions(
+      product?.width ? product.width.split(",").map((s: string) => s.trim()).filter(Boolean) : ["36"]
+    );
+  }, [product]);
+
+  const heights = useMemo(() => {
+    if (product?.series?.allowed_heights) {
+      return sortDimensions(
+        product.series.allowed_heights.split(",").map((s: string) => s.trim()).filter(Boolean)
+      );
+    }
+    return sortDimensions(
+      product?.height ? product.height.split(",").map((s: string) => s.trim()).filter(Boolean) : ["84"]
+    );
+  }, [product]);
+
+  const thicknesses = useMemo(() => {
+    // If series has defined allowed thicknesses, use ONLY those
+    if (product?.series?.allowed_thicknesses) {
+      return sortDimensions(
+        product.series.allowed_thicknesses.split(",").map((s: string) => s.trim()).filter(Boolean)
+      );
+    }
+    // Otherwise fall back to product data (stale) with any pricing rule thicknesses merged in
+    let tList = product?.thickness
+      ? product.thickness.split(",").map((s: string) => s.trim()).filter(Boolean)
+      : ["32"];
+    if (pricingRules && pricingRules.length > 0) {
+      pricingRules.forEach((r: any) => {
+        if (r.thickness && !tList.includes(r.thickness)) {
+          tList.push(r.thickness);
+        }
+      });
+    }
+    return sortDimensions(tList);
+  }, [product, pricingRules]);
 
   // Force the selection to the lowest value whenever the product loads or options change
   React.useEffect(() => {
@@ -339,8 +361,18 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
     if (thicknesses.length > 0) setSelectedThickness(thicknesses[0]);
   }, [thicknesses]);
 
-  // Mock price calculator based on selections
+  // Dynamic price calculator based on selections
   const estimate = useMemo(() => {
+    if (pricingRules && pricingRules.length > 0) {
+      const rule = pricingRules.find(r => r.thickness === selectedThickness) || pricingRules[0];
+      const rate = rule?.rate || 0;
+      const h = parseFloat(selectedHeight) || 84;
+      const w = parseFloat(selectedWidth) || 36;
+      const sqft = (h / 12) * (w / 12);
+      const total = rate * sqft;
+      return `₹${Math.round(total).toLocaleString("en-IN")}.00`;
+    }
+
     let basePrice = 12000;
 
     // Add dimension modifiers
@@ -349,7 +381,7 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
     basePrice += (parseInt(selectedThickness) - 32) * 100;
 
     return `₹${basePrice}.00`;
-  }, [selectedWidth, selectedHeight, selectedThickness]);
+  }, [selectedWidth, selectedHeight, selectedThickness, pricingRules]);
 
   const renderDropdown = (
     label: string,
@@ -579,11 +611,11 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
               product.image_url
                 ? { uri: product.image_url }
                 : (product.slug || product.name || seriesName || "").toLowerCase().includes("rich")
-                ? require("../assets/images/door/nfc/NFC rich.png")
-                : require("../assets/images/door/nfc/NFC Legend.png")
+                ? { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-rich.png" }
+                : { uri: "https://iglmngvjazarthujdofo.supabase.co/storage/v1/object/public/category-images/nfc/nfc-legend.png" }
             }
             style={styles.productImage}
-            resizeMode="stretch"
+            resizeMode="contain"
           />
           <TouchableOpacity style={styles.favoriteButton}>
             <Ionicons name="heart-outline" size={24} color="#000" />

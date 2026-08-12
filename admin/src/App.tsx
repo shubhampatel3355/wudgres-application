@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, FolderTree, Settings, Menu, Bell, IndianRupee, MapPin, Users, MessageSquare, Image as ImageIcon } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, Settings, Menu, Bell, IndianRupee, MapPin, Users, MessageSquare, Image as ImageIcon, TableProperties } from 'lucide-react';
 import DashboardOverview from './pages/DashboardOverview';
 import ProductsList from './pages/ProductsList';
 import ProductForm from './pages/ProductForm';
@@ -11,8 +11,9 @@ import UserManager from './pages/UserManager';
 import LeadManager from './pages/LeadManager';
 import NotificationCenter from './pages/NotificationCenter';
 import SettingsManager from './pages/SettingsManager';
-import FinishesManager from './pages/FinishesManager';
 import HomeContentManager from './pages/HomeContentManager';
+import FrameDimensionsManager from './pages/FrameDimensionsManager';
+import CategoryImagesManager from './pages/CategoryImagesManager';
 import footerLogo from './assets/footer_logo.png';
 import logoIcon from './assets/logo.png';
 
@@ -67,9 +68,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <IndianRupee size={20} />
             <span>Pricing Rules</span>
           </Link>
-          <Link to="/finishes" className={`nav-item ${location.pathname === '/finishes' ? 'active' : ''}`}>
-            <Settings size={20} />
-            <span>Global Finishes</span>
+          <Link to="/frame-dimensions" className={`nav-item ${location.pathname === '/frame-dimensions' ? 'active' : ''}`}>
+            <TableProperties size={20} />
+            <span>Frame Dimensions</span>
+          </Link>
+          <Link to="/category-images" className={`nav-item ${location.pathname === '/category-images' ? 'active' : ''}`}>
+            <ImageIcon size={20} />
+            <span>Category Images</span>
           </Link>
           <Link to="/dealers" className={`nav-item ${location.pathname === '/dealers' ? 'active' : ''}`}>
             <MapPin size={20} />
@@ -119,7 +124,8 @@ function App() {
           <Route path="/products/edit/:id" element={<ProductForm />} />
           <Route path="/series" element={<SeriesManager />} />
           <Route path="/pricing" element={<PricingManager />} />
-          <Route path="/finishes" element={<FinishesManager />} />
+          <Route path="/frame-dimensions" element={<FrameDimensionsManager />} />
+          <Route path="/category-images" element={<CategoryImagesManager />} />
           <Route path="/dealers" element={<DealerManager />} />
           <Route path="/users" element={<UserManager />} />
           <Route path="/leads" element={<LeadManager />} />

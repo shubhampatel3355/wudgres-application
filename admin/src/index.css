@@ -278,8 +278,10 @@ input:focus, textarea:focus, select:focus {
 
 .content-area {
   flex: 1;
-  padding: 2rem;
+  padding: 0;
   overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Button Variants */
@@ -593,4 +595,19 @@ input:focus, textarea:focus, select:focus {
   .pricing-calculator {
     width: 100%;
   }
+}
+
+/* Image card hover overlay */
+.img-overlay {
+  opacity: 0 !important;
+  transition: opacity 0.2s ease !important;
+}
+.img-overlay:hover {
+  opacity: 1 !important;
+}
+
+/* Spin animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "201184103923",
+    "project_id": "wudgres-f87c7",
+    "storage_bucket": "wudgres-f87c7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:201184103923:android:0359edc007d80381819686",
+        "android_client_info": {
+          "package_name": "com.wudgresreal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASMZoKrvFc5X8qBOuEak_1AKknmxwRNdw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

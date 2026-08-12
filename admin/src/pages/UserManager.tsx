@@ -19,6 +19,7 @@ const UserManager = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [sortOrder, setSortOrder] = useState<'alpha' | 'newest' | 'oldest'>('alpha');
 
 
 
@@ -26,10 +27,17 @@ const UserManager = () => {
     try {
       setLoading(true);
       setError(null);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let query = supabase.from('profiles').select('*');
+
+      if (sortOrder === 'alpha') {
+        query = query.order('name', { ascending: true });
+      } else if (sortOrder === 'newest') {
+        query = query.order('created_at', { ascending: false });
+      } else if (sortOrder === 'oldest') {
+        query = query.order('created_at', { ascending: true });
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setUsers(data || []);
@@ -43,7 +51,7 @@ const UserManager = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [sortOrder]);
 
   const toggleAdmin = async (id: string, currentStatus: boolean) => {
     if (!window.confirm(`Are you sure you want to ${currentStatus ? 'remove' : 'grant'} admin privileges for this user?`)) return;
@@ -98,8 +106,20 @@ const UserManager = () => {
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Users size={24} className="text-primary" /> User Management
         </h1>
-        <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.5rem 1rem', borderRadius: '0.5rem', color: 'var(--primary-color)', fontWeight: 600 }}>
-          Total Users: {users.length}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <select 
+            className="input-field" 
+            style={{ width: 'auto', padding: '0.5rem', marginBottom: 0 }}
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as any)}
+          >
+            <option value="alpha">Alphabetical (A-Z)</option>
+            <option value="newest">New Users First</option>
+            <option value="oldest">Old Users First</option>
+          </select>
+          <div style={{ background: 'rgba(212, 175, 55, 0.1)', padding: '0.5rem 1rem', borderRadius: '0.5rem', color: 'var(--primary-color)', fontWeight: 600 }}>
+            Total Users: {users.length}
+          </div>
         </div>
       </div>
       

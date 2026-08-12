@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,12 +9,14 @@ import {
   ImageBackground,
   TouchableOpacity,
   Dimensions,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { SeriesCard, BurgerMenu, GlassMenu } from "../components";
 import { theme } from "../theme";
 import { backgroundImages, categories } from "../data/mockData";
+import { supabase } from "../lib/supabase";
 
 const { width } = Dimensions.get("window");
 
@@ -27,7 +29,37 @@ export const AllProductsScreen: React.FC<AllProductsScreenProps> = ({
   navigation,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // Using static data from mockData instead of Supabase
+  const [dynamicCategories, setDynamicCategories] = useState<any[]>(categories);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchCategoryImages();
+  }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCategoryImages();
+    setRefreshing(false);
+  };
+
+  const fetchCategoryImages = async () => {
+    try {
+      const { data } = await supabase.from('app_category_images').select('*');
+      if (data && data.length > 0) {
+        const updatedCategories = categories.map(cat => {
+          const remoteCat = data.find(d => d.id === cat.id);
+          if (remoteCat && remoteCat.image_url) {
+            return { ...cat, image: { uri: remoteCat.image_url } };
+          }
+          return cat;
+        });
+        setDynamicCategories(updatedCategories);
+      }
+    } catch (err) {
+      console.log('Error fetching category images', err);
+    }
+  };
+
   const handleCategoryPress = (categoryId: string) => {
     if (categoryId === "doors") {
       navigation.navigate("HomeStack", { screen: "DoorsCategory" });
@@ -107,7 +139,7 @@ export const AllProductsScreen: React.FC<AllProductsScreenProps> = ({
       {/* Content Card */}
       <View style={styles.contentCard}>
         <FlatList
-          data={categories}
+          data={dynamicCategories}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={4}
@@ -116,6 +148,13 @@ export const AllProductsScreen: React.FC<AllProductsScreenProps> = ({
           maxToRenderPerBatch={10}
           windowSize={5}
           contentContainerStyle={styles.categoryList}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
+            />
+          }
           renderItem={({ item }) => (
             <SeriesCard
               image={item.image}

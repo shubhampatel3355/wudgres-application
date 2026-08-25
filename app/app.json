@@ -35,7 +35,7 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.wudgresreal",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 29,
+      "versionCode": 30,
       "permissions": [
         "android.permission.NFC",
         "android.permission.CAMERA",

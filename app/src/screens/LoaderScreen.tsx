@@ -19,7 +19,7 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
       }
     };
 
-    const checkSession = async () => {
+    const checkSession = async (): Promise<string> => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
@@ -30,23 +30,22 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
             if (Date.now() - startTime > thirtyDaysInMs) {
               await supabase.auth.signOut();
               await SecureStore.deleteItemAsync('session_start_time');
-              navigate('Login');
-              return;
+              return 'Login';
             }
           }
-          navigate('Main');
+          return 'Main';
         } else {
-          navigate('Login');
+          return 'Login';
         }
       } catch {
-        navigate('Login');
+        return 'Login';
       }
     };
 
     // Minimum 1.5s for splash brand feel, then navigate as soon as auth is ready
     const minDelay = new Promise<void>(resolve => setTimeout(resolve, 1500));
-    Promise.all([checkSession(), minDelay]).then(() => {
-      // navigate() is called inside checkSession; minDelay ensures minimum display time
+    Promise.all([checkSession(), minDelay]).then(([screen]) => {
+      navigate(screen);
     });
   }, []);
 

@@ -2,12 +2,12 @@ import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   Dimensions,
   Animated,
   Pressable,
 } from "react-native";
+import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { theme } from "../theme";
 import { Skeleton } from "./Skeleton";
@@ -106,14 +106,24 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       >
         <Animated.View style={{ opacity: opacityAnim, width: "100%" }}>
           <View style={styles.imageContainer}>
-            <Image source={image} style={styles.image} resizeMode="cover" />
+            {showSkeleton ? (
+              <Skeleton width="100%" height="100%" borderRadius={0} />
+            ) : (
+              <Image 
+                source={image} 
+                style={styles.image} 
+                contentFit="contain" 
+                transition={200}
+                cachePolicy="memory-disk"
+              />
+            )}
           </View>
 
           <View style={styles.textContainer}>
             {showSkeleton ? (
               <View style={styles.skeletonContainer}>
-                <Skeleton width="100%" height={8} borderRadius={4} style={{ marginBottom: 6 }} color="rgba(200, 200, 200, 0.4)" />
-                <Skeleton width="80%" height={8} borderRadius={4} color="rgba(200, 200, 200, 0.4)" />
+                <Skeleton width="100%" height={8} borderRadius={4} style={{ marginBottom: 6 }} />
+                <Skeleton width="80%" height={8} borderRadius={4} />
               </View>
             ) : (
               <Text style={[styles.nameText, { color: textColor }]} numberOfLines={2}>
@@ -134,10 +144,11 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     width: "100%",
-    aspectRatio: 0.45, // Taller aspect ratio for doors
+    aspectRatio: 0.5, // Changed to 0.5 for better proportions
     backgroundColor: "transparent",
     borderRadius: 0,
     overflow: "hidden",
+    padding: 8, // Add padding to prevent the image from touching the edges
   },
   image: {
     width: "100%",

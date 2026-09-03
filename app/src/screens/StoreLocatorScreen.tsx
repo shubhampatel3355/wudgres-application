@@ -642,7 +642,7 @@ export const StoreLocatorScreen = () => {
       }, 300);
     }
   };
-  const handleCardPress = (store: StoreWithDistance, index: number) => {
+  const handleCardPress = useCallback((store: StoreWithDistance, index: number) => {
     // Toggle expand/collapse
     setExpandedCardIndex((prev) => (prev === index ? null : index));
     // Animate map to location
@@ -657,16 +657,16 @@ export const StoreLocatorScreen = () => {
         800
       );
     }
-  };
+  }, []);
 
-  const renderDealerCard = ({ item, index }: { item: StoreWithDistance; index: number }) => (
+  const renderDealerCard = useCallback(({ item, index }: { item: StoreWithDistance; index: number }) => (
     <DealerCard
       item={item}
       index={index}
       isExpanded={expandedCardIndex === index}
       onPress={() => handleCardPress(item, index)}
     />
-  );
+  ), [expandedCardIndex, handleCardPress]);
 
   const renderSkeletons = () => (
     <View style={styles.listContent}>
@@ -696,7 +696,7 @@ export const StoreLocatorScreen = () => {
     </View>
   );
 
-  const renderViewAllFooter = () => {
+  const renderViewAllFooter = useCallback(() => {
     if (!hasMoreDealers) return null;
     const remainingCount = filteredStores.length - nearbyStores.length;
     return (
@@ -717,7 +717,7 @@ export const StoreLocatorScreen = () => {
         <Ionicons name="chevron-forward" size={22} color="#CCC" />
       </TouchableOpacity>
     );
-  };
+  }, [hasMoreDealers, filteredStores.length, nearbyStores.length]);
 
   return (
     <View style={[styles.container, { paddingTop: STATUS_BAR_HEIGHT + 10 }]}>

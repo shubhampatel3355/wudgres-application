@@ -3,6 +3,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import NetworkOverlay from './src/components/NetworkOverlay';
 import { WishlistProvider } from './src/context/WishlistContext';
+import { HomeProvider } from './src/context/HomeContext';
 import { useFonts } from 'expo-font';
 import { View, Text, LogBox } from 'react-native';
 
@@ -65,11 +66,13 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <WishlistProvider>
-        <StatusBar style="light" />
-        <AppNavigator />
-        <NetworkOverlay />
-      </WishlistProvider>
+      <HomeProvider>
+        <WishlistProvider>
+          <StatusBar style="light" />
+          <AppNavigator />
+          <NetworkOverlay />
+        </WishlistProvider>
+      </HomeProvider>
     </SafeAreaProvider>
   );
 }

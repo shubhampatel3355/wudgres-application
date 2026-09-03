@@ -160,7 +160,6 @@ export const AllProductsScreen: React.FC<AllProductsScreenProps> = ({
               image={item.image}
               name={item.name}
               height={width * 0.45}
-              imageResizeMode="cover"
               onPress={() => handleCategoryPress(item.id)}
             />
           )}

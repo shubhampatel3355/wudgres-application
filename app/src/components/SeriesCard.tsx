@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, Pressable, StyleSheet, Dimensions, Animated } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Dimensions, Animated } from 'react-native';
+import { Image } from "expo-image";
 import { theme } from '../theme';
 
 const { width } = Dimensions.get('window');
@@ -9,10 +10,10 @@ interface SeriesCardProps {
     name: string;
     onPress?: () => void;
     height?: number | string;
-    imageResizeMode?: 'cover' | 'contain' | 'stretch' | 'center';
+    imageContentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
-export const SeriesCard: React.FC<SeriesCardProps> = ({ image, name, onPress, height, imageResizeMode }) => {
+export const SeriesCard: React.FC<SeriesCardProps> = ({ image, name, onPress, height, imageContentFit }) => {
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
     const handlePressIn = () => {
@@ -35,7 +36,13 @@ export const SeriesCard: React.FC<SeriesCardProps> = ({ image, name, onPress, he
         <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
             <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
                 <View style={styles.imageContainer}>
-                    <Image source={image} style={styles.image} resizeMode={imageResizeMode || "cover"} />
+                    <Image 
+                        source={image} 
+                        style={styles.image} 
+                        contentFit={imageContentFit || "cover"} 
+                        transition={200}
+                        cachePolicy="memory-disk"
+                    />
                 </View>
                 <Text style={styles.name}>{name}</Text>
             </Animated.View>

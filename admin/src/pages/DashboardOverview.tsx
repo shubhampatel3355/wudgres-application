@@ -138,7 +138,7 @@ const DashboardOverview = () => {
   };
 
   return (
-    <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
+    <div className="animate-fade-in" style={{ paddingBottom: '2rem' ,paddingRight: '2rem' ,paddingLeft: '2rem', paddingTop: '1.5rem' }}>
       <h1 className="page-title" style={{ marginBottom: '2rem' }}>Dashboard Overview</h1>
       
       <div className="form-grid">

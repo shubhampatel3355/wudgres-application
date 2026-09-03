@@ -3,12 +3,15 @@ import { View, StyleSheet } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 import { supabase } from '../lib/supabase';
 import * as SecureStore from 'expo-secure-store';
+import { useHomeContext } from '../context/HomeContext';
 
 interface LoaderScreenProps {
   navigation: any;
 }
 
 export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
+  const { preloadHomeData } = useHomeContext();
+
   useEffect(() => {
     let navigated = false;
 
@@ -33,6 +36,7 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
               return 'Login';
             }
           }
+          await preloadHomeData();
           return 'Main';
         } else {
           return 'Login';

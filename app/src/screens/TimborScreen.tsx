@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -123,7 +123,7 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
     );
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
+  const renderProduct = useCallback(({ item }: { item: any }) => (
     <ProductCard textColor="#333333"
       image={
         item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
@@ -132,7 +132,9 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
       onPress={() => handleProductPress(item.id)}
       showSkeleton={false}
     />
-  );
+  ), []);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
 
   return (
     <View style={styles.container}>
@@ -195,12 +197,16 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
         ) : (
           <FlatList
           data={displayProducts}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           numColumns={COLUMN_COUNT}
           showsVerticalScrollIndicator={false}
           renderItem={renderProduct}
           contentContainerStyle={styles.productList}
           columnWrapperStyle={styles.row}
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={5}
+          removeClippedSubviews={true}
         />
         )}
       </View>

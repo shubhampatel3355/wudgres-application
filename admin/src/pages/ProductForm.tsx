@@ -179,6 +179,8 @@ const ProductForm = () => {
     dimensions: '',
     rate: '',
     is_active: true,
+    brass_dome_enabled: false,
+    hrztl_pcs_enabled: false,
   });
 
   useEffect(() => {
@@ -253,7 +255,9 @@ const ProductForm = () => {
         finish: data.finish || '',
         dimensions: data.dimensions || '',
         rate: data.rate || '',
-        is_active: data.is_active,
+        is_active: data.is_active !== false,
+        brass_dome_enabled: data.brass_dome_enabled !== false,
+        hrztl_pcs_enabled: data.hrztl_pcs_enabled !== false,
       });
     }
   };
@@ -363,8 +367,10 @@ const ProductForm = () => {
       shade: formData.shade,
       finish: formData.finish,
       dimensions: formData.dimensions,
-      rate: formData.rate,
-      is_active: formData.is_active
+      rate: formData.rate ? parseFloat(formData.rate) : null,
+      is_active: formData.is_active,
+      brass_dome_enabled: formData.brass_dome_enabled,
+      hrztl_pcs_enabled: formData.hrztl_pcs_enabled,
     };
     
     if (isEditing) {
@@ -594,15 +600,54 @@ const ProductForm = () => {
           )}
         </div>
 
-        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <input 
-            type="checkbox" 
-            name="is_active" 
-            id="is_active"
-            checked={formData.is_active} 
-            onChange={handleChange} 
-          />
-          <label htmlFor="is_active" className="form-label" style={{ marginBottom: 0 }}>Active (Visible in App)</label>
+        <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+            <div style={{ position: 'relative', width: '48px', height: '24px', backgroundColor: formData.is_active ? 'var(--primary)' : 'var(--bg-secondary)', borderRadius: '12px', transition: 'background-color 0.2s', border: '1px solid var(--border-color)' }}>
+              <div style={{ position: 'absolute', top: '2px', left: formData.is_active ? '26px' : '2px', width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+            </div>
+            <input
+              type="checkbox"
+              name="is_active"
+              checked={formData.is_active}
+              onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+              style={{ display: 'none' }}
+            />
+            <span style={{ fontSize: '1rem', fontWeight: 500 }}>Product Active</span>
+          </label>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+            <div style={{ position: 'relative', width: '48px', height: '24px', backgroundColor: formData.brass_dome_enabled ? 'var(--primary)' : 'var(--bg-secondary)', borderRadius: '12px', transition: 'background-color 0.2s', border: '1px solid var(--border-color)' }}>
+              <div style={{ position: 'absolute', top: '2px', left: formData.brass_dome_enabled ? '26px' : '2px', width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+            </div>
+            <input
+              type="checkbox"
+              name="brass_dome_enabled"
+              checked={formData.brass_dome_enabled}
+              onChange={(e) => setFormData({ ...formData, brass_dome_enabled: e.target.checked })}
+              style={{ display: 'none' }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '1rem', fontWeight: 500 }}>Brass Dome</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formData.brass_dome_enabled ? 'Available' : 'Hidden'}</span>
+            </div>
+          </label>
+          
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+            <div style={{ position: 'relative', width: '48px', height: '24px', backgroundColor: formData.hrztl_pcs_enabled ? 'var(--primary)' : 'var(--bg-secondary)', borderRadius: '12px', transition: 'background-color 0.2s', border: '1px solid var(--border-color)' }}>
+              <div style={{ position: 'absolute', top: '2px', left: formData.hrztl_pcs_enabled ? '26px' : '2px', width: '18px', height: '18px', backgroundColor: 'white', borderRadius: '50%', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+            </div>
+            <input
+              type="checkbox"
+              name="hrztl_pcs_enabled"
+              checked={formData.hrztl_pcs_enabled}
+              onChange={(e) => setFormData({ ...formData, hrztl_pcs_enabled: e.target.checked })}
+              style={{ display: 'none' }}
+            />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '1rem', fontWeight: 500 }}>Hrztl Pcs & Brass Domes</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formData.hrztl_pcs_enabled ? 'Available' : 'Hidden'}</span>
+            </div>
+          </label>
         </div>
 
         <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>

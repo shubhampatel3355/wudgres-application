@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { ProductCard, GlassMenu, BurgerMenu } from "../components";
+import { ProductCard, GlassMenu, BurgerMenu, Skeleton } from "../components";
 import { theme } from "../theme";
 import { backgroundImages } from "../data/mockData";
 import { supabase } from "../lib/supabase";
@@ -147,8 +147,8 @@ export const VenDecorScreen: React.FC<VenDecorScreenProps> = ({
 
   const renderSkeleton = (key: number) => (
     <View key={key} style={styles.seriesTab}>
-      <View style={[styles.seriesThumbnailContainer, { backgroundColor: '#e0e0e0', elevation: 0, borderWidth: 0 }]} />
-      <View style={{ width: 120, height: 16, backgroundColor: '#e0e0e0', marginTop: 12, borderRadius: 4 }} />
+      <Skeleton width="100%" height={undefined} style={{ aspectRatio: 2.2, borderRadius: 12 }} />
+      <Skeleton width={120} height={16} borderRadius={4} style={{ marginTop: 12 }} />
     </View>
   );
 

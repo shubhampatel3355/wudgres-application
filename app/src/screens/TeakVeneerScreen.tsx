@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -119,7 +119,7 @@ export const TeakVeneerScreen: React.FC<TeakVeneerScreenProps> = ({
     );
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
+  const renderProduct = useCallback(({ item }: { item: any }) => (
     <ProductCard textColor="#333333"
       image={
         item.image_url ? { uri: item.image_url } : backgroundImages.woodTexture
@@ -128,7 +128,9 @@ export const TeakVeneerScreen: React.FC<TeakVeneerScreenProps> = ({
       onPress={() => handleProductPress(item.id)}
       showSkeleton={false}
     />
-  );
+  ), []);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
 
   return (
     <View style={styles.container}>
@@ -205,12 +207,16 @@ export const TeakVeneerScreen: React.FC<TeakVeneerScreenProps> = ({
         ) : (
           <FlatList
           data={displayProducts}
-          keyExtractor={(item) => item.id}
+          keyExtractor={keyExtractor}
           numColumns={COLUMN_COUNT}
           showsVerticalScrollIndicator={false}
           renderItem={renderProduct}
           contentContainerStyle={styles.productList}
           columnWrapperStyle={styles.row}
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={5}
+          removeClippedSubviews={true}
         />
         )}
       </View>

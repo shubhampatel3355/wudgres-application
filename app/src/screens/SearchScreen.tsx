@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -238,7 +238,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
     setIsLoading(false);
   };
 
-  const handleProductPress = (item: any) => {
+  const handleProductPress = useCallback((item: any) => {
     if (item.isStatic) {
       if (item.inHomeStack) {
         navigation.navigate("Main", {
@@ -251,7 +251,24 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
     } else {
       navigation.navigate("ProductDetail", { productId: item.id });
     }
-  };
+  }, [navigation]);
+
+  const renderProduct = useCallback(({ item, index }: { item: any, index: number }) => (
+    <View style={styles.cardWrapper}>
+      <ProductCard
+        image={
+          item.isStatic 
+            ? (item.image_url || backgroundImages.hero) 
+            : (item.image_url ? { uri: item.image_url } : backgroundImages.hero)
+        }
+        name={item.name}
+        index={index}
+        onPress={() => handleProductPress(item)}
+      />
+    </View>
+  ), [handleProductPress]);
+
+  const keyExtractor = useCallback((item: any) => item.id.toString(), []);
 
   return (
     <KeyboardAvoidingView
@@ -316,24 +333,15 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
           ) : results.length > 0 ? (
             <FlatList
               data={results}
-              keyExtractor={(item) => item.id}
+              keyExtractor={keyExtractor}
               numColumns={COLUMN_COUNT}
               columnWrapperStyle={styles.row}
               contentContainerStyle={styles.listContent}
-              renderItem={({ item, index }) => (
-                <View style={styles.cardWrapper}>
-                  <ProductCard
-                    image={
-                      item.isStatic 
-                        ? (item.image_url || backgroundImages.hero) 
-                        : (item.image_url ? { uri: item.image_url } : backgroundImages.hero)
-                    }
-                    name={item.name}
-                    index={index}
-                    onPress={() => handleProductPress(item)}
-                  />
-                </View>
-              )}
+              renderItem={renderProduct}
+              initialNumToRender={8}
+              maxToRenderPerBatch={6}
+              windowSize={5}
+              removeClippedSubviews={true}
             />
           ) : query.trim().length > 0 ? (
             <View style={styles.emptyContainer}>

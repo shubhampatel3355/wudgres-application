@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Package, FolderTree, Settings, Menu, Bell, IndianRupee, MapPin, Users, MessageSquare, Image as ImageIcon, TableProperties } from 'lucide-react';
+import { LayoutDashboard, Package, FolderTree, Settings, Menu, Bell, IndianRupee, MapPin, Users, MessageSquare, Image as ImageIcon, TableProperties, Shield } from 'lucide-react';
 import DashboardOverview from './pages/DashboardOverview';
 import ProductsList from './pages/ProductsList';
 import ProductForm from './pages/ProductForm';
@@ -14,6 +14,7 @@ import SettingsManager from './pages/SettingsManager';
 import HomeContentManager from './pages/HomeContentManager';
 import FrameDimensionsManager from './pages/FrameDimensionsManager';
 import CategoryImagesManager from './pages/CategoryImagesManager';
+import BrassManager from './pages/BrassManager';
 import footerLogo from './assets/footer_logo.png';
 import logoIcon from './assets/logo.png';
 
@@ -80,6 +81,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <MapPin size={20} />
             <span>Dealers & Stores</span>
           </Link>
+          <Link to="/brass-management" className={`nav-item ${location.pathname === '/brass-management' ? 'active' : ''}`}>
+            <Shield size={20} />
+            <span>Brass Management</span>
+          </Link>
           <Link to="/users" className={`nav-item ${location.pathname === '/users' ? 'active' : ''}`}>
             <Users size={20} />
             <span>Users</span>
@@ -127,6 +132,7 @@ function App() {
           <Route path="/frame-dimensions" element={<FrameDimensionsManager />} />
           <Route path="/category-images" element={<CategoryImagesManager />} />
           <Route path="/dealers" element={<DealerManager />} />
+          <Route path="/brass-management" element={<BrassManager />} />
           <Route path="/users" element={<UserManager />} />
           <Route path="/leads" element={<LeadManager />} />
           <Route path="/notifications" element={<NotificationCenter />} />

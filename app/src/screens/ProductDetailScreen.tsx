@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   ScrollView,
   ImageBackground,
-  Image,
   Modal,
   Animated,
   Share,
 } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { Ionicons } from "@expo/vector-icons";
@@ -39,9 +39,12 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
   const { isInWishlist, toggleWishlist } = useWishlist();
 
   const [pricingRules, setPricingRules] = useState<any[]>([]);
+  const [brassSettings, setBrassSettings] = useState<any>(null);
 
   // Customization state
   const [selectedDesign, setSelectedDesign] = useState<string>("");
+  type BrassSelection = 'NONE' | 'BRASS_DOME' | 'HRZTL_PCS_BRASS_DOMES';
+  const [selectedBrassOption, setSelectedBrassOption] = useState<BrassSelection>('NONE');
   const [selectedWidth, setSelectedWidth] = useState<string>("36");
   const [selectedHeight, setSelectedHeight] = useState<string>("84");
   const [selectedThickness, setSelectedThickness] = useState<string>("32");
@@ -88,6 +91,15 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
           .select("*")
           .in("series_id", ids);
         if (rules) setPricingRules(rules);
+      }
+
+      if (data.brass_dome_enabled || data.hrztl_pcs_enabled) {
+        const { data: bSettings } = await supabase
+          .from("brass_settings")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+        if (bSettings) setBrassSettings(bSettings);
       }
     }
     setLoading(false);
@@ -228,11 +240,19 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
     const heightFt = (parseFloat(selectedHeight) || 84) / 12;
     const sqft = widthFt * heightFt;
 
-    const totalPrice = rate * sqft;
+    let totalPrice = rate * sqft;
+
+    if (brassSettings && selectedBrassOption !== 'NONE') {
+      if (selectedBrassOption === 'BRASS_DOME') {
+        totalPrice += Number(brassSettings.brass_dome_price || 0);
+      } else if (selectedBrassOption === 'HRZTL_PCS_BRASS_DOMES') {
+        totalPrice += Number(brassSettings.hrztl_pcs_brass_domes_price || 0);
+      }
+    }
 
     // Format as Indian currency (e.g. ₹12,345)
     return `₹${Math.round(totalPrice).toLocaleString("en-IN")}`;
-  }, [selectedDesign, selectedWidth, selectedHeight, selectedThickness, pricingRules]);
+  }, [selectedDesign, selectedWidth, selectedHeight, selectedThickness, pricingRules, brassSettings, selectedBrassOption]);
 
   const renderDropdown = (
     label: string,
@@ -451,7 +471,9 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
                 : backgroundImages.woodTexture
             }
             style={styles.productImage}
-            resizeMode="contain"
+            contentFit="contain"
+            transition={300}
+            cachePolicy="memory-disk"
           />
           <TouchableOpacity 
             style={styles.favoriteButton}
@@ -542,6 +564,83 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
             })}
           </View>
 
+          {/* Brass Options */}
+          {brassSettings && (
+            <View style={{ marginTop: 10 }}>
+              {product?.brass_dome_enabled && (
+                <View style={{ marginBottom: 10 }}>
+                  <Text style={[styles.customizeTitle, { marginBottom: 12 }]}>
+                    Brass dome
+                  </Text>
+                  <View style={styles.optionsContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedBrassOption === 'BRASS_DOME' && styles.optionButtonActive,
+                        { width: '48%' }
+                      ]}
+                      onPress={() => setSelectedBrassOption('BRASS_DOME')}
+                    >
+                      <Text style={[styles.optionText, selectedBrassOption === 'BRASS_DOME' && styles.optionTextActive]}>
+                        Include
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedBrassOption !== 'BRASS_DOME' && styles.optionButtonActive,
+                        { width: '48%' }
+                      ]}
+                      onPress={() => {
+                        if (selectedBrassOption === 'BRASS_DOME') setSelectedBrassOption('NONE');
+                      }}
+                    >
+                      <Text style={[styles.optionText, selectedBrassOption !== 'BRASS_DOME' && styles.optionTextActive]}>
+                        Exclude
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              {product?.hrztl_pcs_enabled && (
+                <View style={{ marginBottom: 24 }}>
+                  <Text style={[styles.customizeTitle, { marginBottom: 12 }]}>
+                    Hrztl Pcs & Brass Domes
+                  </Text>
+                  <View style={styles.optionsContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedBrassOption === 'HRZTL_PCS_BRASS_DOMES' && styles.optionButtonActive,
+                        { width: '48%' }
+                      ]}
+                      onPress={() => setSelectedBrassOption('HRZTL_PCS_BRASS_DOMES')}
+                    >
+                      <Text style={[styles.optionText, selectedBrassOption === 'HRZTL_PCS_BRASS_DOMES' && styles.optionTextActive]}>
+                        Include
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.optionButton,
+                        selectedBrassOption !== 'HRZTL_PCS_BRASS_DOMES' && styles.optionButtonActive,
+                        { width: '48%' }
+                      ]}
+                      onPress={() => {
+                        if (selectedBrassOption === 'HRZTL_PCS_BRASS_DOMES') setSelectedBrassOption('NONE');
+                      }}
+                    >
+                      <Text style={[styles.optionText, selectedBrassOption !== 'HRZTL_PCS_BRASS_DOMES' && styles.optionTextActive]}>
+                        Exclude
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          )}
+
           {/* Dimension Selectors */}
           <View
             style={{
@@ -571,10 +670,17 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
             )}
           </View>
 
+
+
           {/* Estimate Banner */}
           <View style={styles.estimateBanner}>
             <View style={styles.estimateDetails}>
               <Text style={styles.estimateDetailText}>{selectedDesign}</Text>
+              {selectedBrassOption !== 'NONE' && brassSettings && (
+                <Text style={styles.estimateDetailText}>
+                  + {selectedBrassOption === 'BRASS_DOME' ? 'Brass Dome' : 'Hrztl Pcs & Brass Domes'}
+                </Text>
+              )}
               <Text style={styles.estimateDetailText}>
                 {selectedWidth}" × {selectedHeight}" ({((parseFloat(selectedWidth)||36)/12).toFixed(2)}ft × {((parseFloat(selectedHeight)||84)/12).toFixed(2)}ft)
               </Text>

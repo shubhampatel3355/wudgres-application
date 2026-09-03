@@ -20,10 +20,9 @@ import { theme } from "../theme";
 import { supabase } from "../lib/supabase";
 import {
   backgroundImages,
-  currentUser,
-  categories,
   series,
 } from "../data/mockData";
+import { useHomeContext } from "../context/HomeContext";
 
 const { width } = Dimensions.get("window");
 
@@ -32,10 +31,8 @@ interface HomeScreenProps {
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const { userName, heroContent, dynamicCategories, preloadHomeData } = useHomeContext();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [userName, setUserName] = useState<string>("User");
-  const [heroContent, setHeroContent] = useState<any>(null);
-  const [dynamicCategories, setDynamicCategories] = useState<any[]>(categories);
   const scrollX = useRef(new Animated.Value(0)).current;
 
   // Animation values
@@ -43,68 +40,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const translateY = useRef(new Animated.Value(30)).current;
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', user.id)
-          .single();
-        if (data?.name) {
-          setUserName(data.name.split(' ')[0]);
-        }
-      }
-    } catch (err) {
-      console.error("Error fetching user", err);
-    }
-  };
-
-  const fetchHeroContent = async () => {
-    try {
-      const { data } = await supabase
-        .from('app_hero_content')
-        .select('*')
-        .limit(1)
-        .single();
-      if (data) {
-        setHeroContent(data);
-      }
-    } catch (err) {
-      console.log('Error fetching hero content', err);
-    }
-  };
-
-  const fetchCategoryImages = async () => {
-    try {
-      const { data } = await supabase.from('app_category_images').select('*');
-      if (data && data.length > 0) {
-        const updatedCategories = categories.map(cat => {
-          const remoteCat = data.find(d => d.id === cat.id);
-          if (remoteCat && remoteCat.image_url) {
-            return { ...cat, image: { uri: remoteCat.image_url } };
-          }
-          return cat;
-        });
-        setDynamicCategories(updatedCategories);
-      }
-    } catch (err) {
-      console.log('Error fetching category images', err);
-    }
-  };
-
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([fetchUser(), fetchHeroContent(), fetchCategoryImages()]);
+    await preloadHomeData();
     setRefreshing(false);
   };
 
   useEffect(() => {
-
-    // Run fetches in parallel
-    Promise.all([fetchUser(), fetchHeroContent(), fetchCategoryImages()]);
-
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,

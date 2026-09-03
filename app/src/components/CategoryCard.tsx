@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { View, Text, Image, Pressable, StyleSheet, Animated } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
+import { Image } from "expo-image";
 import { theme } from '../theme';
 
 interface CategoryCardProps {
@@ -32,7 +33,13 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ image, name, onPress
         <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
             <Animated.View style={[styles.container, layout === 'full' && styles.containerFull, { transform: [{ scale: scaleAnim }] }]}>
                 <View style={[styles.imageContainer, layout === 'full' && styles.imageContainerFull]}>
-                    <Image source={image} style={styles.image} resizeMode="cover" />
+                    <Image 
+                        source={image} 
+                        style={styles.image} 
+                        contentFit="cover" 
+                        transition={200}
+                        cachePolicy="memory-disk"
+                    />
                 </View>
                 <Text style={[styles.name, layout === 'full' && styles.nameFull]}>{name}</Text>
             </Animated.View>

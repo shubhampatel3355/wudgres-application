@@ -36,7 +36,11 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
               return 'Login';
             }
           }
-          await preloadHomeData();
+          // Prevent hanging if network is slow
+          await Promise.race([
+            preloadHomeData(),
+            new Promise(resolve => setTimeout(resolve, 8000))
+          ]);
           return 'Main';
         } else {
           return 'Login';
@@ -61,7 +65,7 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
         resizeMode={ResizeMode.COVER}
         shouldPlay
         isMuted
-        isLooping={false}
+        isLooping={true}
       />
     </View>
   );

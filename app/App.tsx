@@ -22,18 +22,16 @@ export default function App() {
 
   useEffect(() => {
     let pushToken: string | null | undefined = null;
+    let currentSession: any = null;
     
     async function setupNotifications() {
       try {
         pushToken = await registerForPushNotificationsAsync();
-        if (pushToken) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            await supabase
-              .from('profiles')
-              .update({ expo_push_token: pushToken })
-              .eq('id', session.user.id);
-          }
+        if (pushToken && currentSession?.user) {
+          await supabase
+            .from('profiles')
+            .update({ expo_push_token: pushToken })
+            .eq('id', currentSession.user.id);
         }
       } catch (err) {
         console.error('Error setting up push notifications', err);
@@ -43,6 +41,7 @@ export default function App() {
     setupNotifications();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      currentSession = session;
       if (session?.user && pushToken) {
         await supabase
           .from('profiles')

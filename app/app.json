@@ -2,8 +2,8 @@
   "expo": {
     "name": "WudGres",
     "slug": "wudgres",
-    "version": "1.0.2",
-    "orientation": "portrait",
+    "version": "1.0.3",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": false,
@@ -35,7 +35,8 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.wudgresreal",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 32,
+      "resizeableActivity": true,
+      "versionCode": 33,
       "permissions": [
         "android.permission.NFC",
         "android.permission.CAMERA",
@@ -53,6 +54,15 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow WudGres to use your location."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
         }
       ]
     ],

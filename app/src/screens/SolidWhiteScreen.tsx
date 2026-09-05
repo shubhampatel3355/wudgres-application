@@ -85,11 +85,6 @@ export const SolidWhiteScreen: React.FC<SolidWhiteScreenProps> = ({
 
   const fetchSeriesTabs = async () => {
     setIsLoading(true);
-    const { data: parent } = await supabase
-      .from("series")
-      .select("id")
-      .eq("name", "Solid White")
-      .single();
     try {
       const { data: parent } = await supabase
         .from("series")

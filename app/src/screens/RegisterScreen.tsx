@@ -53,19 +53,23 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
     }
 
     setLoading(true);
-    const formattedPhone = `+91${phone}`;
+    try {
+      const formattedPhone = `+91${phone}`;
 
-    // Trigger OTP sending via Supabase Auth
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: formattedPhone,
-    });
+      // Trigger OTP sending via Supabase Auth
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+      });
 
-    setLoading(false);
-
-    if (error) {
-      Alert.alert("Error", error.message);
-    } else {
-      setOtpSent(true);
+      if (error) {
+        Alert.alert("Error", error.message);
+      } else {
+        setOtpSent(true);
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,43 +81,47 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
     }
 
     setLoading(true);
-    const formattedPhone = `+91${phone}`;
+    try {
+      const formattedPhone = `+91${phone}`;
 
-    // Step 1: Verify OTP (This securely logs them in / creates their auth user)
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: formattedPhone,
-      token: otp,
-      type: 'sms',
-    });
+      // Step 1: Verify OTP (This securely logs them in / creates their auth user)
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formattedPhone,
+        token: otp,
+        type: 'sms',
+      });
 
-    if (error) {
-      setLoading(false);
-      Alert.alert("Verification Failed", error.message);
-      return;
-    }
-
-    // Step 2: Now that they are authenticated, save their name/email to profiles
-    if (data?.user?.id) {
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: data.user.id,
-          name: name,
-          email: email,
-          phone: formattedPhone,
-          is_admin: false,
-        });
-
-      if (profileError) {
-        console.warn("Profile upsert warning:", profileError.message);
+      if (error) {
+        Alert.alert("Verification Failed", error.message);
+        return;
       }
+
+      // Step 2: Now that they are authenticated, save their name/email to profiles
+      if (data?.user?.id) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: data.user.id,
+            name: name,
+            email: email,
+            phone: formattedPhone,
+            is_admin: false,
+          });
+
+        if (profileError) {
+          console.warn("Profile upsert warning:", profileError.message);
+        }
+      }
+
+      await SecureStore.setItemAsync('session_start_time', Date.now().toString());
+
+      Alert.alert("Success", "Account created successfully!");
+      navigation.replace("Loader");
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    await SecureStore.setItemAsync('session_start_time', Date.now().toString());
-
-    setLoading(false);
-    Alert.alert("Success", "Account created successfully!");
-    navigation.replace("Loader");
   };
 
   return (

@@ -77,37 +77,43 @@ export const ProductDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series(*)")
-      .eq("id", productId)
-      .single();
-    if (data) {
-      setProduct(data);
-      const ids = [data.series_id, data.series?.parent_id].filter(Boolean);
-      if (ids.length > 0) {
-        const { data: rules } = await supabase
-          .from("pricing_rules")
-          .select("*")
-          .in("series_id", ids);
-        if (rules) setPricingRules(rules);
-      }
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*, series(*)")
+        .eq("id", productId)
+        .single();
+      if (error) throw error;
+      if (data) {
+        setProduct(data);
+        const ids = [data.series_id, data.series?.parent_id].filter(Boolean);
+        if (ids.length > 0) {
+          const { data: rules } = await supabase
+            .from("pricing_rules")
+            .select("*")
+            .in("series_id", ids);
+          if (rules) setPricingRules(rules);
+        }
 
-      if (data.brass_dome_enabled || data.hrztl_pcs_enabled) {
-        const { data: bSettings } = await supabase
-          .from("brass_settings")
-          .select("*")
-          .limit(1)
-          .maybeSingle();
-        if (bSettings) setBrassSettings(bSettings);
+        if (data.brass_dome_enabled || data.hrztl_pcs_enabled) {
+          const { data: bSettings } = await supabase
+            .from("brass_settings")
+            .select("*")
+            .limit(1)
+            .maybeSingle();
+          if (bSettings) setBrassSettings(bSettings);
+        }
       }
+    } catch (e) {
+      console.warn('fetchProduct error:', e);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // Helper to sort alphanumeric dimensions like "30mm" or "36"
+  // Helper to sort alphanumeric dimensions — does NOT mutate the input array
   const sortDimensions = (arr: string[]) => {
-    return arr.sort((a, b) => {
+    return [...arr].sort((a, b) => {
       const numA = parseFloat(a) || 0;
       const numB = parseFloat(b) || 0;
       return numA - numB;

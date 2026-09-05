@@ -59,66 +59,70 @@ export const FlushDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
+    try {
+      // Fetch frame dimensions from dashboard
+      const { data: dimRows } = await supabase
+        .from("frame_dimensions")
+        .select("*")
+        .eq("series_slug", "flush-doors")
+        .order("sort_order");
+      setFrameDimensions(dimRows || []);
 
-    // Fetch frame dimensions from dashboard
-    const { data: dimRows } = await supabase
-      .from("frame_dimensions")
-      .select("*")
-      .eq("series_slug", "flush-doors")
-      .order("sort_order");
-    setFrameDimensions(dimRows || []);
+      if (productId === "flush-door-static") {
+        let fetchedImageUrl = null;
 
-    if (productId === "flush-door-static") {
-      let fetchedImageUrl = null;
-
-      try {
-        // Try to get image from categories table first
-        const { data: catData, error: catError } = await supabase
-          .from("categories")
-          .select("image_url")
-          .ilike("name", "%Flush%")
-          .maybeSingle();
-
-        if (catData?.image_url) {
-          fetchedImageUrl = catData.image_url;
-        } else {
-          // Fallback to products table in the Flush Doors series
-          const { data: prodData, error: prodError } = await supabase
-            .from("products")
-            .select("image_url, series!inner(name)")
-            .eq("series.name", "Flush Doors")
-            .limit(1)
+        try {
+          // Try to get image from categories table first
+          const { data: catData } = await supabase
+            .from("categories")
+            .select("image_url")
+            .ilike("name", "%Flush%")
             .maybeSingle();
-          
-          if (prodData?.image_url) {
-            fetchedImageUrl = prodData.image_url;
-          }
-        }
-      } catch (err) {
-        console.warn("Failed to fetch flush door image dynamically:", err);
-      }
 
-      setProduct({
-        id: "flush-door-static",
-        slug: "Flush Doors",
-        category: "Flush Doors",
-        width: "60mm, 75mm, 100mm, 125mm",
-        height: "30mm, 50mm, 63mm",
-        thickness: "32",
-        dimensions:
-          "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
-        rate: "295.00, 320.00, 395.00, 420.00",
-        image_url: fetchedImageUrl,
-      });
-    } else {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series(name)")
-        .eq("id", productId)
-        .single();
-      if (data) setProduct(data);
+          if (catData?.image_url) {
+            fetchedImageUrl = catData.image_url;
+          } else {
+            // Fallback to products table in the Flush Doors series
+            const { data: prodData } = await supabase
+              .from("products")
+              .select("image_url, series!inner(name)")
+              .eq("series.name", "Flush Doors")
+              .limit(1)
+              .maybeSingle();
+
+            if (prodData?.image_url) {
+              fetchedImageUrl = prodData.image_url;
+            }
+          }
+        } catch (err) {
+          console.warn("Failed to fetch flush door image dynamically:", err);
+        }
+
+        setProduct({
+          id: "flush-door-static",
+          slug: "Flush Doors",
+          category: "Flush Doors",
+          width: "60mm, 75mm, 100mm, 125mm",
+          height: "30mm, 50mm, 63mm",
+          thickness: "32",
+          dimensions:
+            "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
+          rate: "295.00, 320.00, 395.00, 420.00",
+          image_url: fetchedImageUrl,
+        });
+      } else {
+        const { data } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .eq("id", productId)
+          .single();
+        if (data) setProduct(data);
+      }
+    } catch (err) {
+      console.warn("fetchProduct (FlushDoor) error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const framePricing = useMemo(() => {

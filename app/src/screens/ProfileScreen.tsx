@@ -55,8 +55,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           text: "Logout",
           style: "destructive",
           onPress: async () => {
-            await supabase.auth.signOut();
-            navigation.replace("Login");
+            try {
+              await supabase.auth.signOut();
+            } catch (err) {
+              console.warn("Error signing out:", err);
+            } finally {
+              // Always return to Login — the user's intent is to leave the
+              // account context even if the network sign-out call failed.
+              navigation.replace("Login");
+            }
           }
         }
       ]
@@ -280,9 +287,6 @@ const styles = StyleSheet.create({
   headerBackground: {
     width: "100%",
   },
-  safeArea: {
-    flex: 1,
-  },
   headerContent: {
     paddingHorizontal: theme.spacing.xs,
     paddingBottom: theme.spacing.xl,
@@ -437,9 +441,6 @@ const styles = StyleSheet.create({
   dropdownLeft: {
     flexDirection: "row",
     alignItems: "center",
-  },
-  dropdownIcon: {
-    marginRight: theme.spacing.sm,
   },
   dropdownOptionText: {
     fontSize: theme.fontSize.sm,

@@ -129,37 +129,41 @@ export const EngineeredWoodFrameDetailScreen: React.FC<
 
   const fetchProduct = async () => {
     setLoading(true);
+    try {
+      // Fetch frame dimensions from dashboard
+      const { data: dimRows } = await supabase
+        .from("frame_dimensions")
+        .select("*")
+        .eq("series_slug", "eng-wood-frames")
+        .order("sort_order");
+      setFrameDimensions(dimRows || []);
 
-    // Fetch frame dimensions from dashboard
-    const { data: dimRows } = await supabase
-      .from("frame_dimensions")
-      .select("*")
-      .eq("series_slug", "eng-wood-frames")
-      .order("sort_order");
-    setFrameDimensions(dimRows || []);
-
-    if (productId === "eng-wood-frame-static") {
-      setProduct({
-        id: "eng-wood-frame-static",
-        slug: "Eng. Wood Frames",
-        category: "Eng. Wood Frames",
-        width: "60mm, 75mm, 100mm, 125mm",
-        height: "30mm, 50mm, 63mm",
-        thickness: "32",
-        dimensions:
-          "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
-        rate: "295.00, 320.00, 395.00, 420.00",
-        image_url: null,
-      });
-    } else {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series(name)")
-        .eq("id", productId)
-        .single();
-      if (data) setProduct(data);
+      if (productId === "eng-wood-frame-static") {
+        setProduct({
+          id: "eng-wood-frame-static",
+          slug: "Eng. Wood Frames",
+          category: "Eng. Wood Frames",
+          width: "60mm, 75mm, 100mm, 125mm",
+          height: "30mm, 50mm, 63mm",
+          thickness: "32",
+          dimensions:
+            "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
+          rate: "295.00, 320.00, 395.00, 420.00",
+          image_url: null,
+        });
+      } else {
+        const { data } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .eq("id", productId)
+          .single();
+        if (data) setProduct(data);
+      }
+    } catch (err) {
+      console.warn("fetchProduct (EngineeredWoodFrame) error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const framePricing = useMemo(() => {

@@ -213,29 +213,34 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
 
   const performSearch = async (searchQuery: string) => {
     setIsLoading(true);
+    try {
+      // 1. Find matching static categories
+      const lowerQuery = searchQuery.toLowerCase();
+      const matchedStatic = STATIC_CATEGORIES.filter((item) =>
+        item.name.toLowerCase().includes(lowerQuery),
+      );
 
-    // 1. Find matching static categories
-    const lowerQuery = searchQuery.toLowerCase();
-    const matchedStatic = STATIC_CATEGORIES.filter((item) =>
-      item.name.toLowerCase().includes(lowerQuery),
-    );
+      // 2. Fetch matching products from Supabase
+      const { data } = await supabase
+        .from("products")
+        .select("*, series!inner(name)")
+        .ilike("name", `%${searchQuery}%`)
+        .limit(20);
 
-    // 2. Fetch matching products from Supabase
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, series!inner(name)")
-      .ilike("name", `%${searchQuery}%`)
-      .limit(20);
+      // 3. Combine results (static first)
+      const combinedResults = [...matchedStatic];
+      if (data) {
+        combinedResults.push(...data);
+      }
 
-    // 3. Combine results (static first)
-    const combinedResults = [...matchedStatic];
-    if (data) {
-      combinedResults.push(...data);
+      LayoutAnimation.configureNext(fluidSpringConfig);
+      setResults(combinedResults);
+    } catch (err) {
+      console.warn('Search error:', err);
+      setResults([]);
+    } finally {
+      setIsLoading(false);
     }
-
-    LayoutAnimation.configureNext(fluidSpringConfig);
-    setResults(combinedResults);
-    setIsLoading(false);
   };
 
   const handleProductPress = useCallback((item: any) => {

@@ -18,6 +18,11 @@ export const HomeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [heroContent, setHeroContent] = useState<any>(null);
   const [dynamicCategories, setDynamicCategories] = useState<any[]>(categories);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const mountedRef = React.useRef(true);
+
+  React.useEffect(() => {
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const preloadHomeData = async () => {
     try {
@@ -47,8 +52,8 @@ export const HomeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .from('app_hero_content')
             .select('*')
             .limit(1)
-            .single();
-          if (data) {
+            .maybeSingle();
+          if (data && mountedRef.current) {
             setHeroContent(data);
           }
         } catch (err) {
@@ -59,7 +64,7 @@ export const HomeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const fetchCategoryImages = async () => {
         try {
           const { data } = await supabase.from('app_category_images').select('*');
-          if (data && data.length > 0) {
+          if (data && data.length > 0 && mountedRef.current) {
             const updatedCategories = categories.map((cat) => {
               const remoteCat = data.find((d) => d.id === cat.id);
               if (remoteCat && remoteCat.image_url) {
@@ -73,7 +78,7 @@ export const HomeProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const imagePromises = updatedCategories
               .filter(cat => cat.image?.uri)
               .map(cat => Image.prefetch(cat.image!.uri).catch(() => {}));
-            
+
             await Promise.all(imagePromises);
           }
         } catch (err) {

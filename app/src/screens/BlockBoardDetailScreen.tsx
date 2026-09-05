@@ -58,28 +58,33 @@ export const BlockBoardDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
-    if (productId === "block-board-static") {
-      setProduct({
-        id: "block-board-static",
-        slug: "Block Boards",
-        category: "Block Boards",
-        width: "60mm, 75mm, 100mm, 125mm",
-        height: "30mm, 50mm, 63mm",
-        thickness: "32",
-        dimensions:
-          "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
-        rate: "295.00, 320.00, 395.00, 420.00",
-        image_url: null,
-      });
-    } else {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series(name)")
-        .eq("id", productId)
-        .single();
-      if (data) setProduct(data);
+    try {
+      if (productId === "block-board-static") {
+        setProduct({
+          id: "block-board-static",
+          slug: "Block Boards",
+          category: "Block Boards",
+          width: "60mm, 75mm, 100mm, 125mm",
+          height: "30mm, 50mm, 63mm",
+          thickness: "32",
+          dimensions:
+            "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
+          rate: "295.00, 320.00, 395.00, 420.00",
+          image_url: null,
+        });
+      } else {
+        const { data } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .eq("id", productId)
+          .single();
+        if (data) setProduct(data);
+      }
+    } catch (err) {
+      console.warn("fetchProduct (BlockBoard) error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading || !product) {

@@ -50,16 +50,23 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
     }
 
     setIsLoading(true);
-    // Try new name first, fallback to old name
-    let { data } = await supabase
-      .from("series")
-      .select("*")
-      .or("name.ilike.Legacy Wood%,name.ilike.Timbor%")
-      .order("order_index");
-    if (data && data.length > 0) {
-      setCached(CACHE_KEY, data);
-      setSpecificSeriesTabs(data);
-      setSelectedSeries(data[0].id);
+    try {
+      // Try new name first, fallback to old name
+      const { data } = await supabase
+        .from("series")
+        .select("*")
+        .or("name.ilike.Legacy Wood%,name.ilike.Timbor%")
+        .order("order_index");
+      if (data && data.length > 0) {
+        setCached(CACHE_KEY, data);
+        setSpecificSeriesTabs(data);
+        setSelectedSeries(data[0].id);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (e) {
+      console.warn('fetchSeriesTabs (Timbor) error:', e);
+      setIsLoading(false);
     }
   };
 
@@ -74,15 +81,22 @@ export const TimborScreen: React.FC<TimborScreenProps> = ({ navigation }) => {
     }
 
     setIsLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series!inner(name)")
-      .eq("series_id", selectedSeries)
-      .order("name", { ascending: true });
-    const result = data || [];
-    setCached(CACHE_KEY, result);
-    setDisplayProducts(result);
-    setIsLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*, series!inner(name)")
+        .eq("series_id", selectedSeries)
+        .order("name", { ascending: true });
+      if (error) throw error;
+      const result = data || [];
+      setCached(CACHE_KEY, result);
+      setDisplayProducts(result);
+    } catch (e) {
+      console.warn('fetchProducts (Timbor) error:', e);
+      setDisplayProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleProductPress = (productId: string) => {

@@ -46,7 +46,6 @@ import {
     NotificationsScreen,
     DynamicCategoryScreen,
 } from '../screens';
-import { DoorsIcon } from '../components';
 import { theme } from '../theme';
 
 const Stack = createNativeStackNavigator();

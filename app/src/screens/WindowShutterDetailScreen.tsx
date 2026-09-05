@@ -79,47 +79,51 @@ export const WindowShutterDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
+    try {
+      // Fetch frame dimensions from dashboard
+      const { data: dimRows } = await supabase
+        .from("frame_dimensions")
+        .select("*")
+        .eq("series_slug", "window-shutters")
+        .order("sort_order");
+      setFrameDimensions(dimRows || []);
 
-    // Fetch frame dimensions from dashboard
-    const { data: dimRows } = await supabase
-      .from("frame_dimensions")
-      .select("*")
-      .eq("series_slug", "window-shutters")
-      .order("sort_order");
-    setFrameDimensions(dimRows || []);
+      const { data: catData } = await supabase
+        .from("app_category_images")
+        .select("hero_image_url, image_url")
+        .eq("id", "window-shutters")
+        .maybeSingle();
+      const dynamicImage = catData?.hero_image_url || catData?.image_url || null;
 
-    const { data: catData } = await supabase
-      .from("app_category_images")
-      .select("hero_image_url, image_url")
-      .eq("id", "window-shutters")
-      .single();
-    const dynamicImage = catData?.hero_image_url || catData?.image_url || null;
-
-    if (productId === "shutter-static") {
-      setProduct({
-        id: "shutter-static",
-        slug: "Window Shutters",
-        width: "60mm, 75mm, 100mm, 125mm",
-        height: "30mm, 50mm, 63mm",
-        thickness: "32",
-        dimensions:
-          "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
-        rate: "295.00, 320.00, 395.00, 420.00",
-        image_url: null,
-        hero_image_url: dynamicImage
-      });
-    } else {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series(name)")
-        .eq("id", productId)
-        .single();
-      if (data) {
-        data.hero_image_url = dynamicImage;
-        setProduct(data);
+      if (productId === "shutter-static") {
+        setProduct({
+          id: "shutter-static",
+          slug: "Window Shutters",
+          width: "60mm, 75mm, 100mm, 125mm",
+          height: "30mm, 50mm, 63mm",
+          thickness: "32",
+          dimensions:
+            "67MM X 32MM Height Upto 48 Inches, 67MM X 32MM Height above 48 Inches, 92MM X 32MM Height Upto 48 Inches, 92MM X 32MM Height above 48 Inches",
+          rate: "295.00, 320.00, 395.00, 420.00",
+          image_url: null,
+          hero_image_url: dynamicImage
+        });
+      } else {
+        const { data } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .eq("id", productId)
+          .single();
+        if (data) {
+          data.hero_image_url = dynamicImage;
+          setProduct(data);
+        }
       }
+    } catch (err) {
+      console.warn("fetchProduct (WindowShutter) error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const framePricing = useMemo(() => {

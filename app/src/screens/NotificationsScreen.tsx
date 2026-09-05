@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   ScrollView,
   ImageBackground,
   Switch
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
 import { theme } from "../theme";
 import { backgroundImages } from "../data/mockData";
 
@@ -17,11 +18,47 @@ interface NotificationsScreenProps {
   navigation: any;
 }
 
+interface NotificationPrefs {
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  orderUpdates: boolean;
+  promotions: boolean;
+}
+
+const NOTIFICATION_PREFS_KEY = "notification_preferences";
+
+const DEFAULT_PREFS: NotificationPrefs = {
+  pushEnabled: true,
+  emailEnabled: true,
+  orderUpdates: true,
+  promotions: false,
+};
+
 export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ navigation }) => {
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(true);
-  const [orderUpdates, setOrderUpdates] = useState(true);
-  const [promotions, setPromotions] = useState(false);
+  const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const stored = await SecureStore.getItemAsync(NOTIFICATION_PREFS_KEY);
+        if (stored) {
+          setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(stored) });
+        }
+      } catch (err) {
+        console.warn("Failed to load notification preferences:", err);
+      }
+    })();
+  }, []);
+
+  const updatePref = (key: keyof NotificationPrefs, value: boolean) => {
+    setPrefs((prev) => {
+      const next = { ...prev, [key]: value };
+      SecureStore.setItemAsync(NOTIFICATION_PREFS_KEY, JSON.stringify(next)).catch((err) =>
+        console.warn("Failed to save notification preferences:", err)
+      );
+      return next;
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -66,8 +103,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
                 trackColor={{ false: "#D1D1D6", true: theme.colors.primary }}
                 thumbColor="#FFFFFF"
                 ios_backgroundColor="#D1D1D6"
-                onValueChange={setPushEnabled}
-                value={pushEnabled}
+                onValueChange={(v) => updatePref("pushEnabled", v)}
+                value={prefs.pushEnabled}
               />
             </View>
 
@@ -82,8 +119,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
                 trackColor={{ false: "#D1D1D6", true: theme.colors.primary }}
                 thumbColor="#FFFFFF"
                 ios_backgroundColor="#D1D1D6"
-                onValueChange={setEmailEnabled}
-                value={emailEnabled}
+                onValueChange={(v) => updatePref("emailEnabled", v)}
+                value={prefs.emailEnabled}
               />
             </View>
           </View>
@@ -101,8 +138,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
                 trackColor={{ false: "#D1D1D6", true: theme.colors.primary }}
                 thumbColor="#FFFFFF"
                 ios_backgroundColor="#D1D1D6"
-                onValueChange={setOrderUpdates}
-                value={orderUpdates}
+                onValueChange={(v) => updatePref("orderUpdates", v)}
+                value={prefs.orderUpdates}
               />
             </View>
 
@@ -117,8 +154,8 @@ export const NotificationsScreen: React.FC<NotificationsScreenProps> = ({ naviga
                 trackColor={{ false: "#D1D1D6", true: theme.colors.primary }}
                 thumbColor="#FFFFFF"
                 ios_backgroundColor="#D1D1D6"
-                onValueChange={setPromotions}
-                value={promotions}
+                onValueChange={(v) => updatePref("promotions", v)}
+                value={prefs.promotions}
               />
             </View>
           </View>

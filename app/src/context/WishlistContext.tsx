@@ -21,11 +21,8 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Listen for auth state changes
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null);
-    });
-
+    // onAuthStateChange fires immediately with the current session (INITIAL_SESSION event),
+    // so there is no need for a separate getSession() call.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUserId(session?.user?.id || null);
     });

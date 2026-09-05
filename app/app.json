@@ -36,7 +36,7 @@
       "package": "com.wudgresreal",
       "googleServicesFile": "./google-services.json",
       "resizeableActivity": true,
-      "versionCode": 33,
+      "versionCode": 34,
       "permissions": [
         "android.permission.NFC",
         "android.permission.CAMERA",

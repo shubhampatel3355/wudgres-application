@@ -138,6 +138,17 @@ interface StoreWithDistance extends Store {
   distanceKm: number;
 }
 
+// getCurrentPositionAsync has no built-in timeout — on devices with a weak/no
+// GPS signal (indoors, emulators) it can hang indefinitely and freeze this screen.
+const LOCATION_TIMEOUT_MS = 10000;
+const getCurrentPositionWithTimeout = (options: Location.LocationOptions) =>
+  Promise.race([
+    Location.getCurrentPositionAsync(options),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Location request timed out')), LOCATION_TIMEOUT_MS)
+    ),
+  ]);
+
 // ─── Skeleton Card Component ────────────────────────────────────────
 const SkeletonCard = ({ index }: { index: number }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -190,13 +201,13 @@ const DealerCard = ({
         toValue: 1,
         duration: 380,
         delay: index * 60,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 380,
         delay: index * 60,
-        useNativeDriver: false,
+        useNativeDriver: true,
       }),
     ]).start();
   }, []);
@@ -325,12 +336,18 @@ export const StoreLocatorScreen = () => {
   // ── Debounce timer ref ──
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Request location on focus ──
   useEffect(() => {
-    // Run on initial mount
-    requestLocation();
+    // Clean up debounce timer on unmount
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
 
-    // Run on every subsequent focus
+  // React Navigation's 'focus' event fires immediately on mount for the
+  // initially-focused screen, so this single listener covers both the
+  // initial load and every subsequent return to this screen — no separate
+  // mount-time call needed (that would double-fire the GPS request).
+  useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       requestLocation();
     });
@@ -339,24 +356,32 @@ export const StoreLocatorScreen = () => {
   }, [navigation]);
 
   const requestLocation = async () => {
+    let status: Location.PermissionStatus;
     try {
-      let { status } = await Location.getForegroundPermissionsAsync();
-      
+      const current = await Location.getForegroundPermissionsAsync();
+      status = current.status;
       if (status !== 'granted') {
         const response = await Location.requestForegroundPermissionsAsync();
         status = response.status;
       }
+    } catch (err) {
+      setHasLocationPermission(false);
+      setIsLoading(false);
+      return;
+    }
 
-      if (status !== 'granted') {
-        setHasLocationPermission(false);
-        setIsLoading(false);
-        return;
-      }
+    if (status !== 'granted') {
+      setHasLocationPermission(false);
+      setIsLoading(false);
+      return;
+    }
 
-      setHasLocationPermission(true);
+    setHasLocationPermission(true);
 
-      // Always get a fresh GPS fix — high accuracy
-      const location = await Location.getCurrentPositionAsync({
+    try {
+      // Always get a fresh GPS fix — high accuracy, with a timeout so a weak/no
+      // signal can't hang this screen forever
+      const location = await getCurrentPositionWithTimeout({
         accuracy: Location.Accuracy.High,
       });
       const coords = {
@@ -414,8 +439,13 @@ export const StoreLocatorScreen = () => {
         }
       }
     } catch (err) {
-      setHasLocationPermission(false);
+      // Permission is fine here — this is a GPS fix failure/timeout, not a
+      // permission problem, so don't route the user to the permission screen.
       setIsLoading(false);
+      Alert.alert(
+        'Location Unavailable',
+        'Could not get your current location. Please check that GPS is turned on and try again.'
+      );
     }
   };
 
@@ -573,8 +603,9 @@ export const StoreLocatorScreen = () => {
     setIsLoading(true);
 
     try {
-      // Always get a fresh high-accuracy GPS fix
-      const location = await Location.getCurrentPositionAsync({
+      // Always get a fresh high-accuracy GPS fix, with a timeout so a weak/no
+      // signal can't hang this screen forever
+      const location = await getCurrentPositionWithTimeout({
         accuracy: Location.Accuracy.High,
       });
       const coords = {
@@ -617,6 +648,10 @@ export const StoreLocatorScreen = () => {
       }
     } catch {
       setIsLoading(false);
+      Alert.alert(
+        'Location Unavailable',
+        'Could not get your current location. Please check that GPS is turned on and try again.'
+      );
     }
   };
 

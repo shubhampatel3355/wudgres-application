@@ -50,9 +50,16 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
       }
     };
 
-    // Minimum 1.5s for splash brand feel, then navigate as soon as auth is ready
+    // Minimum 1.5s for splash brand feel, then navigate as soon as auth is ready.
+    // checkSession() itself is guarded, but the underlying supabase.auth.getSession()
+    // call can hang indefinitely on some devices, so bound the whole check with a
+    // hard timeout too — otherwise the app is stuck on this splash screen forever.
     const minDelay = new Promise<void>(resolve => setTimeout(resolve, 1500));
-    Promise.all([checkSession(), minDelay]).then(([screen]) => {
+    const sessionCheck = Promise.race([
+      checkSession(),
+      new Promise<string>(resolve => setTimeout(() => resolve('Login'), 10000)),
+    ]);
+    Promise.all([sessionCheck, minDelay]).then(([screen]) => {
       navigate(screen);
     });
   }, []);

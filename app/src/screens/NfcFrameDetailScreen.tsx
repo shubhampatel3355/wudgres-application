@@ -115,43 +115,47 @@ export const NfcFrameDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
-    
-    // Fetch pricing rules for NFC Frames
-    const { data: sData } = await supabase.from("series").select("*").eq("slug", "nfc-frames").maybeSingle();
-    if (sData) {
-      const { data: rules } = await supabase.from("pricing_rules").select("*").eq("series_id", sData.id);
-      setPricingRules(rules || []);
-    }
+    try {
+      // Fetch pricing rules for NFC Frames
+      const { data: sData } = await supabase.from("series").select("*").eq("slug", "nfc-frames").maybeSingle();
+      if (sData) {
+        const { data: rules } = await supabase.from("pricing_rules").select("*").eq("series_id", sData.id);
+        setPricingRules(rules || []);
+      }
 
-    // Fetch frame dimensions from dashboard
-    const { data: dimRows } = await supabase
-      .from("frame_dimensions")
-      .select("*")
-      .eq("series_slug", "nfc-frames")
-      .order("sort_order");
-    setFrameDimensions(dimRows || []);
+      // Fetch frame dimensions from dashboard
+      const { data: dimRows } = await supabase
+        .from("frame_dimensions")
+        .select("*")
+        .eq("series_slug", "nfc-frames")
+        .order("sort_order");
+      setFrameDimensions(dimRows || []);
 
-    if (productId === "frame-static") {
-      setProduct({
-        id: "frame-static",
-        slug: "NFC Frame",
-        width: "60mm, 75mm, 100mm, 125mm",
-        height: "30mm, 50mm, 63mm",
-        thickness: "32",
-        dimensions:
-          "FRAME SECTION 75X50, FRAME SECTION 100X63, FRAME SECTION 125x63",
-        rate: "165 / RFT, 320 / RFT, 385 / RFT",
-        image_url: null,
-      });
-    } else {
-      const { data } = await supabase
-        .from("products")
-        .select("*, series(name)")
-        .eq("id", productId)
-        .single();
-      if (data) setProduct(data);
+      if (productId === "frame-static") {
+        setProduct({
+          id: "frame-static",
+          slug: "NFC Frame",
+          width: "60mm, 75mm, 100mm, 125mm",
+          height: "30mm, 50mm, 63mm",
+          thickness: "32",
+          dimensions:
+            "FRAME SECTION 75X50, FRAME SECTION 100X63, FRAME SECTION 125x63",
+          rate: "165 / RFT, 320 / RFT, 385 / RFT",
+          image_url: null,
+        });
+      } else {
+        const { data } = await supabase
+          .from("products")
+          .select("*, series(name)")
+          .eq("id", productId)
+          .single();
+        if (data) setProduct(data);
+      }
+    } catch (err) {
+      console.warn("fetchProduct (NfcFrame) error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const framePricing = useMemo(() => {

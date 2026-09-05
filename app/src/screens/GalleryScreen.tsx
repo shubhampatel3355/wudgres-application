@@ -30,9 +30,16 @@ export const GalleryScreen: React.FC<GalleryScreenProps> = ({ navigation }) => {
   React.useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
-      const { data } = await supabase.from("products").select("*").order("name", { ascending: true });
-      if (data) setProducts(data);
-      setIsLoading(false);
+      try {
+        const { data, error } = await supabase.from("products").select("*").order("name", { ascending: true });
+        if (error) throw error;
+        setProducts(data || []);
+      } catch (e) {
+        console.warn('fetchProducts (Gallery) error:', e);
+        setProducts([]);
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchProducts();
   }, []);

@@ -47,42 +47,45 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       Alert.alert("Error", "Please enter a valid 10-digit phone number");
       return;
     }
-    
+
     setLoading(true);
-    
-    // Check if user exists (check both 10-digit and +91 formats in DB just in case)
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("id, phone")
-      .or(`phone.eq.${phone},phone.eq.+91${phone}`)
-      .limit(1)
-      .maybeSingle();
 
-    if (!profileData) {
-      Keyboard.dismiss();
-      // Delay slightly to let the keyboard fully close and the layout to stabilize
-      // This prevents the violent layout flickering on Android caused by KeyboardAvoidingView
-      setTimeout(() => {
+    try {
+      // Check if user exists (check both 10-digit and +91 formats in DB just in case)
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id, phone")
+        .or(`phone.eq.${phone},phone.eq.+91${phone}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!profileData) {
+        Keyboard.dismiss();
         setLoading(false);
-        navigation.navigate("Register", { initialPhone: phone });
-      }, 150);
-      return;
-    }
+        // Delay slightly to let keyboard close and prevent violent layout shift
+        setTimeout(() => {
+          navigation.navigate("Register", { initialPhone: phone });
+        }, 150);
+        return;
+      }
 
-    // Supabase Auth requires E.164 format for SMS
-    const formattedPhone = `+91${phone}`;
+      // Supabase Auth requires E.164 format for SMS
+      const formattedPhone = `+91${phone}`;
 
-    // User exists, send OTP
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: formattedPhone,
-    });
+      // User exists, send OTP
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+      });
 
-    setLoading(false);
-
-    if (error) {
-      Alert.alert("Error", error.message);
-    } else {
-      setOtpSent(true);
+      if (error) {
+        Alert.alert("Error", error.message);
+      } else {
+        setOtpSent(true);
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 

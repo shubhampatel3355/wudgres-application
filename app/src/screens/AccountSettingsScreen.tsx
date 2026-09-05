@@ -33,12 +33,12 @@ export const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ na
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('profiles')
             .select('name, phone')
             .eq('id', user.id)
             .single();
-            
+
           if (data) {
             setName(data.name || "");
             setPhone(data.phone || "");
@@ -135,13 +135,13 @@ export const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ na
 
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Phone Number</Text>
-                  <View style={styles.inputWrapper}>
+                  <View style={[styles.inputWrapper, styles.inputWrapperDisabled]}>
                     <Ionicons name="call-outline" size={20} color={theme.colors.textMuted} style={styles.inputIcon} />
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, styles.inputDisabled]}
                       value={phone}
-                      onChangeText={setPhone}
-                      placeholder="Enter your phone number"
+                      editable={false}
+                      placeholder="No phone number"
                       placeholderTextColor="#999"
                       keyboardType="phone-pad"
                     />
@@ -162,7 +162,7 @@ export const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ na
                 </TouchableOpacity>
                 
                 <Text style={styles.infoText}>
-                  Note: Your email cannot be changed from this screen. Please contact support if you need to update your email address.
+                  Note: Your phone number is linked to your login and cannot be changed here. Contact support if you need to update it.
                 </Text>
               </View>
             )}
@@ -285,5 +285,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     textAlign: 'center',
     lineHeight: 18,
-  }
+  },
+  inputWrapperDisabled: {
+    backgroundColor: '#F0F0F0',
+    borderColor: '#E0E0E0',
+    opacity: 0.7,
+  },
+  inputDisabled: {
+    color: theme.colors.textMuted,
+  },
 });

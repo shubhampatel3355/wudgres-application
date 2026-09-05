@@ -121,181 +121,187 @@ export const NfcDoorDetailScreen: React.FC<ProductDetailScreenProps> = ({
 
   const fetchProduct = async () => {
     setLoading(true);
-    const isLegend =
-      (seriesName &&
-        (seriesName.toLowerCase().includes("legend") ||
-          seriesName.toLowerCase().includes("eco"))) ||
-      (productId &&
-        (productId.includes("265a86c2") ||
-          productId.includes("legend") ||
-          productId.includes("eco")));
-    const isRich =
-      (seriesName && seriesName.toLowerCase().includes("rich")) ||
-      (productId &&
-        (productId.includes("92c1cd07") || productId.includes("rich")));
+    try {
+      const isLegend =
+        (seriesName &&
+          (seriesName.toLowerCase().includes("legend") ||
+            seriesName.toLowerCase().includes("eco"))) ||
+        (productId &&
+          (productId.includes("265a86c2") ||
+            productId.includes("legend") ||
+            productId.includes("eco")));
+      const isRich =
+        (seriesName && seriesName.toLowerCase().includes("rich")) ||
+        (productId &&
+          (productId.includes("92c1cd07") || productId.includes("rich")));
 
-    let data: any[] | null = null;
+      let data: any[] | null = null;
 
-    const fetchPricingRules = async (productSeriesId?: string) => {
-      let allRules: any[] = [];
-      if (productSeriesId) {
-        const { data: specificRules } = await supabase.from("pricing_rules").select("*").eq("series_id", productSeriesId);
-        if (specificRules) allRules = [...specificRules];
-      }
-      setPricingRules(allRules);
-    };
+      const fetchPricingRules = async (productSeriesId?: string) => {
+        let allRules: any[] = [];
+        if (productSeriesId) {
+          const { data: specificRules } = await supabase.from("pricing_rules").select("*").eq("series_id", productSeriesId);
+          if (specificRules) allRules = [...specificRules];
+        }
+        setPricingRules(allRules);
+      };
 
-    if (isLegend) {
-      try {
-        let res = await supabase
-          .from("products")
-          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-          .or("name.ilike.%legend%,name.ilike.%eco%,slug.ilike.%legend%,slug.ilike.%eco%")
-          .limit(1);
-        if (!res.data || res.data.length === 0) {
-          res = await supabase
+      if (isLegend) {
+        try {
+          let res = await supabase
             .from("products")
             .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-            .ilike("series.name", "%legend%")
+            .or("name.ilike.%legend%,name.ilike.%eco%,slug.ilike.%legend%,slug.ilike.%eco%")
             .limit(1);
+          if (!res.data || res.data.length === 0) {
+            res = await supabase
+              .from("products")
+              .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
+              .ilike("series.name", "%legend%")
+              .limit(1);
+          }
+          if (!res.data || res.data.length === 0) {
+            res = await supabase
+              .from("products")
+              .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
+              .ilike("series.name", "%eco%")
+              .limit(1);
+          }
+          if (!res.data || res.data.length === 0) {
+            const resId = await supabase
+              .from("products")
+              .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
+              .eq("id", productId)
+              .maybeSingle();
+            if (resId.data) res.data = [resId.data];
+          }
+          data = res.data;
+        } catch (err) {
+          console.log("Error fetching NFC Legend product:", err);
         }
-        if (!res.data || res.data.length === 0) {
-          res = await supabase
+
+        if (data && data.length > 0) {
+          setProduct(data[0]);
+          await fetchPricingRules(data[0].series_id);
+        } else {
+          setProduct({
+            id: "nfc-legend-static",
+            slug: "NFC Legend",
+            name: "NFC Legend",
+            category: "NFC Doors",
+            width: "36, 38, 40, 42",
+            height: "84, 96",
+            thickness: "32, 35",
+            dimensions:
+              "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
+            rate:
+              "12000.00, 12500.00, 13000.00, 13500.00, 14000.00, 14500.00, 15000.00, 15500.00",
+            image_url: null,
+            series: { name: "NFC Legend" },
+          });
+        }
+      } else if (isRich) {
+        try {
+          let res = await supabase
             .from("products")
             .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-            .ilike("series.name", "%eco%")
+            .or("name.ilike.%rich%,slug.ilike.%rich%")
             .limit(1);
+          if (!res.data || res.data.length === 0) {
+            res = await supabase
+              .from("products")
+              .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
+              .ilike("series.name", "%rich%")
+              .limit(1);
+          }
+          if (!res.data || res.data.length === 0) {
+            const resId = await supabase
+              .from("products")
+              .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
+              .eq("id", productId)
+              .maybeSingle();
+            if (resId.data) res.data = [resId.data];
+          }
+          data = res.data;
+        } catch (err) {
+          console.log("Error fetching NFC Rich product:", err);
         }
-        if (!res.data || res.data.length === 0) {
-          const resId = await supabase
+
+        if (data && data.length > 0) {
+          setProduct(data[0]);
+          await fetchPricingRules(data[0].series_id);
+        } else {
+          setProduct({
+            id: "nfc-rich-static",
+            slug: "NFC DOORS - Rich",
+            name: "NFC DOORS - Rich",
+            category: "NFC Doors",
+            width: "36, 38, 40, 42",
+            height: "84, 96",
+            thickness: "32, 35",
+            dimensions:
+              "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
+            rate:
+              "14000.00, 14500.00, 15000.00, 15500.00, 16000.00, 16500.00, 17000.00, 17500.00",
+            image_url: null,
+            series: { name: "NFC DOORS - Rich" },
+          });
+        }
+      } else {
+        let fetched = false;
+        if (seriesName) {
+          const { data: sData } = await supabase
+            .from("products")
+            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
+            .ilike("series.name", `%${seriesName}%`)
+            .limit(1);
+          if (sData && sData.length > 0) {
+            setProduct(sData[0]);
+            await fetchPricingRules(sData[0].series_id);
+            fetched = true;
+          }
+        }
+        if (!fetched && productId) {
+          const { data: pData } = await supabase
             .from("products")
             .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
             .eq("id", productId)
             .maybeSingle();
-          if (resId.data) res.data = [resId.data];
+          if (pData) {
+            setProduct(pData);
+            await fetchPricingRules(pData.series_id);
+            fetched = true;
+          }
         }
-        data = res.data;
-      } catch (err) {
-        console.log("Error fetching NFC Legend product:", err);
-      }
-
-      if (data && data.length > 0) {
-        setProduct(data[0]);
-        await fetchPricingRules(data[0].series_id);
-      } else {
-        setProduct({
-          id: "nfc-legend-static",
-          slug: "NFC Legend",
-          name: "NFC Legend",
-          category: "NFC Doors",
-          width: "36, 38, 40, 42",
-          height: "84, 96",
-          thickness: "32, 35",
-          dimensions:
-            "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
-          rate:
-            "12000.00, 12500.00, 13000.00, 13500.00, 14000.00, 14500.00, 15000.00, 15500.00",
-          image_url: null,
-          series: { name: "NFC Legend" },
-        });
-      }
-    } else if (isRich) {
-      try {
-        let res = await supabase
-          .from("products")
-          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-          .or("name.ilike.%rich%,slug.ilike.%rich%")
-          .limit(1);
-        if (!res.data || res.data.length === 0) {
-          res = await supabase
-            .from("products")
-            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-            .ilike("series.name", "%rich%")
-            .limit(1);
-        }
-        if (!res.data || res.data.length === 0) {
-          const resId = await supabase
-            .from("products")
-            .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-            .eq("id", productId)
-            .maybeSingle();
-          if (resId.data) res.data = [resId.data];
-        }
-        data = res.data;
-      } catch (err) {
-        console.log("Error fetching NFC Rich product:", err);
-      }
-
-      if (data && data.length > 0) {
-        setProduct(data[0]);
-        await fetchPricingRules(data[0].series_id);
-      } else {
-        setProduct({
-          id: "nfc-rich-static",
-          slug: "NFC DOORS - Rich",
-          name: "NFC DOORS - Rich",
-          category: "NFC Doors",
-          width: "36, 38, 40, 42",
-          height: "84, 96",
-          thickness: "32, 35",
-          dimensions:
-            "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
-          rate:
-            "14000.00, 14500.00, 15000.00, 15500.00, 16000.00, 16500.00, 17000.00, 17500.00",
-          image_url: null,
-          series: { name: "NFC DOORS - Rich" },
-        });
-      }
-    } else {
-      let fetched = false;
-      if (seriesName) {
-        const { data: sData } = await supabase
-          .from("products")
-          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-          .ilike("series.name", `%${seriesName}%`)
-          .limit(1);
-        if (sData && sData.length > 0) {
-          setProduct(sData[0]);
-          await fetchPricingRules(sData[0].series_id);
-          fetched = true;
+        if (!fetched) {
+          setProduct({
+            id: "nfc-legend-static",
+            slug: "NFC Legend",
+            name: "NFC Legend",
+            category: "NFC Doors",
+            width: "36, 38, 40, 42",
+            height: "84, 96",
+            thickness: "32, 35",
+            dimensions:
+              "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
+            rate:
+              "12000.00, 12500.00, 13000.00, 13500.00, 14000.00, 14500.00, 15000.00, 15500.00",
+            image_url: null,
+            series: { name: "NFC Legend" },
+          });
         }
       }
-      if (!fetched && productId) {
-        const { data: pData } = await supabase
-          .from("products")
-          .select("*, series(id, name, allowed_thicknesses, allowed_heights, allowed_widths)")
-          .eq("id", productId)
-          .maybeSingle();
-        if (pData) {
-          setProduct(pData);
-          await fetchPricingRules(pData.series_id);
-          fetched = true;
-        }
-      }
-      if (!fetched) {
-        setProduct({
-          id: "nfc-legend-static",
-          slug: "NFC Legend",
-          name: "NFC Legend",
-          category: "NFC Doors",
-          width: "36, 38, 40, 42",
-          height: "84, 96",
-          thickness: "32, 35",
-          dimensions:
-            "36 x 84 x 32, 38 x 84 x 32, 40 x 84 x 32, 42 x 84 x 32, 36 x 96 x 35, 38 x 96 x 35, 40 x 96 x 35, 42 x 96 x 35",
-          rate:
-            "12000.00, 12500.00, 13000.00, 13500.00, 14000.00, 14500.00, 15000.00, 15500.00",
-          image_url: null,
-          series: { name: "NFC Legend" },
-        });
-      }
+    } catch (err) {
+      console.warn('fetchProduct (NFC) error:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // Helper to sort alphanumeric dimensions like "30mm" or "36"
+
+  // Helper to sort alphanumeric dimensions like "30mm" or "36" — does NOT mutate the input
   const sortDimensions = (arr: string[]) => {
-    return arr.sort((a, b) => {
+    return [...arr].sort((a, b) => {
       const numA = parseFloat(a) || 0;
       const numB = parseFloat(b) || 0;
       return numA - numB;

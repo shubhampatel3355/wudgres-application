@@ -53,14 +53,20 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
       return;
     }
     setIsLoading(true);
-    const { data } = await supabase
-      .from("series")
-      .select("*")
-      .ilike("name", `${initialSeries}%`)
-      .order("order_index");
-    const result = data || [];
-    setCached(cacheKey, result);
-    setAllSeries(result);
+    try {
+      const { data } = await supabase
+        .from("series")
+        .select("*")
+        .ilike("name", `${initialSeries}%`)
+        .order("order_index");
+      const result = data || [];
+      setCached(cacheKey, result);
+      setAllSeries(result);
+    } catch (e) {
+      console.warn('fetchSeriesTabs error:', e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fetchProducts = async () => {
@@ -73,19 +79,26 @@ export const ProductSeriesScreen: React.FC<ProductSeriesScreenProps> = ({
     }
 
     setIsLoading(true);
-    let query = supabase.from("products").select("*, series!inner(name)");
+    try {
+      let query = supabase.from("products").select("*, series!inner(name)");
 
-    if (selectedSeries !== "all") {
-      query = query.eq("series.name", selectedSeries);
-    } else if (initialSeries && initialSeries !== "all") {
-      query = query.ilike("series.name", `${initialSeries}%`);
+      if (selectedSeries && selectedSeries !== "all") {
+        query = query.eq("series.name", selectedSeries);
+      } else if (initialSeries && initialSeries !== "all") {
+        query = query.ilike("series.name", `${initialSeries}%`);
+      }
+
+      const { data, error } = await query.order("name", { ascending: true });
+      if (error) throw error;
+      const result = data || [];
+      setCached(cacheKey, result);
+      setDisplayProducts(result);
+    } catch (e) {
+      console.warn('fetchProducts error:', e);
+      setDisplayProducts([]);
+    } finally {
+      setIsLoading(false);
     }
-
-    const { data } = await query.order("name", { ascending: true });
-    const result = data || [];
-    setCached(cacheKey, result);
-    setDisplayProducts(result);
-    setIsLoading(false);
   };
 
   const handleProductPress = (productId: string) => {

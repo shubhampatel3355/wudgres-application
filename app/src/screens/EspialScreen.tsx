@@ -45,37 +45,53 @@ export const EspialScreen: React.FC<EspialScreenProps> = ({ navigation }) => {
 
   const fetchSeriesTabs = async () => {
     setIsLoading(true);
-    const { data } = await supabase
-      .from("series")
-      .select("*")
-      .ilike("name", "Espial%")
-      .order("order_index");
-    if (data && data.length > 0) {
-      setSpecificSeriesTabs(data);
-      setSelectedSeries(data[0].name);
-    } else {
-      // Check if there's just a root category without sub-series
-      const { data: parent } = await supabase
+    let matchedSeries = false;
+    try {
+      const { data } = await supabase
         .from("series")
-        .select("id, name")
-        .eq("name", "Espial")
-        .single();
-      if (parent) {
-        setSpecificSeriesTabs([{ id: parent.id, name: parent.name }]);
-        setSelectedSeries(parent.name);
+        .select("*")
+        .ilike("name", "Espial%")
+        .order("order_index");
+      if (data && data.length > 0) {
+        setSpecificSeriesTabs(data);
+        setSelectedSeries(data[0].name);
+        matchedSeries = true;
+      } else {
+        // Check if there's just a root category without sub-series
+        const { data: parent } = await supabase
+          .from("series")
+          .select("id, name")
+          .eq("name", "Espial")
+          .single();
+        if (parent) {
+          setSpecificSeriesTabs([{ id: parent.id, name: parent.name }]);
+          setSelectedSeries(parent.name);
+          matchedSeries = true;
+        }
       }
+    } catch (e) {
+      console.warn('fetchSeriesTabs error:', e);
+    } finally {
+      if (!matchedSeries) setIsLoading(false);
     }
   };
 
   const fetchProducts = async () => {
     setIsLoading(true);
-    const { data } = await supabase
-      .from("products")
-      .select("*, series!inner(name)")
-      .eq("series.name", selectedSeries)
-      .order("name", { ascending: true });
-    if (data) setDisplayProducts(data);
-    setIsLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*, series!inner(name)")
+        .eq("series.name", selectedSeries)
+        .order("name", { ascending: true });
+      if (error) throw error;
+      setDisplayProducts(data || []);
+    } catch (e) {
+      console.warn('fetchProducts error:', e);
+      setDisplayProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleProductPress = (productId: string) => {

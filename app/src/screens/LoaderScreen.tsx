@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Video, ResizeMode } from 'expo-av';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { supabase } from '../lib/supabase';
 import * as SecureStore from 'expo-secure-store';
 import { useHomeContext } from '../context/HomeContext';
@@ -11,6 +11,12 @@ interface LoaderScreenProps {
 
 export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
   const { preloadHomeData } = useHomeContext();
+
+  const player = useVideoPlayer(require('../assets/images/video/loader.mp4'), (p) => {
+    p.loop = true;
+    p.muted = true;
+    p.play();
+  });
 
   useEffect(() => {
     let navigated = false;
@@ -66,13 +72,11 @@ export const LoaderScreen: React.FC<LoaderScreenProps> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Video
-        source={require('../assets/images/video/loader.mp4')}
+      <VideoView
+        player={player}
         style={StyleSheet.absoluteFill}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isMuted
-        isLooping={true}
+        contentFit="cover"
+        nativeControls={false}
       />
     </View>
   );

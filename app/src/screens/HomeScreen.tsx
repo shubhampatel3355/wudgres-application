@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Video, ResizeMode } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { CategoryCard, SeriesCard, BurgerMenu, GlassMenu } from "../components";
 import { theme } from "../theme";
 import { supabase } from "../lib/supabase";
@@ -39,6 +39,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(30)).current;
   const [refreshing, setRefreshing] = useState(false);
+
+  // Hero video: heroContent loads asynchronously from HomeContext, so the player
+  // starts with the local fallback and is swapped via replaceAsync() once (or if)
+  // a remote video_url arrives — useVideoPlayer's source param is only used on
+  // the very first render, it does not react to later changes on its own.
+  const [showHeroPoster, setShowHeroPoster] = useState(true);
+  const heroVideoUrlRef = useRef(heroContent?.video_url);
+  const heroPlayer = useVideoPlayer(
+    heroContent?.video_url ? { uri: heroContent.video_url } : require("../assets/images/video/loader.mp4"),
+    (p) => {
+      p.loop = true;
+      p.muted = true;
+      p.play();
+    }
+  );
+
+  useEffect(() => {
+    if (heroContent?.video_url && heroContent.video_url !== heroVideoUrlRef.current) {
+      heroVideoUrlRef.current = heroContent.video_url;
+      setShowHeroPoster(true);
+      heroPlayer
+        .replaceAsync({ uri: heroContent.video_url })
+        .then(() => {
+          heroPlayer.loop = true;
+          heroPlayer.muted = true;
+          heroPlayer.play();
+        })
+        .catch((err) => console.warn("Failed to load hero video:", err));
+    }
+  }, [heroContent?.video_url]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -240,17 +270,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 </View>
               </View>
             ) : (
-              <Video
-                source={heroContent?.video_url ? { uri: heroContent.video_url } : require("../assets/images/video/loader.mp4")}
-                style={styles.video}
-                resizeMode={ResizeMode.COVER}
-                usePoster={true}
-                posterSource={heroContent?.poster_url ? { uri: heroContent.poster_url } : require("../assets/images/about.jpeg")}
-                posterStyle={{ resizeMode: "cover" }}
-                shouldPlay
-                isLooping
-                isMuted
-              />
+              <View style={{ width: "100%", height: "100%" }}>
+                <VideoView
+                  player={heroPlayer}
+                  style={styles.video}
+                  contentFit="cover"
+                  nativeControls={false}
+                  onFirstFrameRender={() => setShowHeroPoster(false)}
+                />
+                {showHeroPoster && (
+                  <Image
+                    source={heroContent?.poster_url ? { uri: heroContent.poster_url } : require("../assets/images/about.jpeg")}
+                    style={[styles.video, { position: "absolute", top: 0, left: 0, resizeMode: "cover" }]}
+                  />
+                )}
+              </View>
             )}
           </View>
 

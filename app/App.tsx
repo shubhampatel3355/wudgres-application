@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import NetworkOverlay from './src/components/NetworkOverlay';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { WishlistProvider } from './src/context/WishlistContext';
 import { HomeProvider } from './src/context/HomeContext';
 import { useFonts } from 'expo-font';
@@ -64,14 +65,16 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <HomeProvider>
-        <WishlistProvider>
-          <StatusBar style="light" />
-          <AppNavigator />
-          <NetworkOverlay />
-        </WishlistProvider>
-      </HomeProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <HomeProvider>
+          <WishlistProvider>
+            <StatusBar style="light" />
+            <AppNavigator />
+            <NetworkOverlay />
+          </WishlistProvider>
+        </HomeProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

@@ -6,3 +6,4 @@ export { DoorsIcon } from './DoorsIcon';
 export { BurgerMenu } from './BurgerMenu';
 export { GlassMenu } from './GlassMenu';
 export { Skeleton } from './Skeleton';
+export { ErrorBoundary } from './ErrorBoundary';

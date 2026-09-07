@@ -29,7 +29,7 @@ export const DynamicCategoryScreen: React.FC<DynamicCategoryScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { categoryId } = route.params;
+  const { categoryId } = route?.params || {};
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [categoryData, setCategoryData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
